@@ -1,0 +1,2 @@
+# startsmart-app
+Simulador-emprendedor
