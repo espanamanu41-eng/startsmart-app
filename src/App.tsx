@@ -1,27 +1,38 @@
 import { useMemo, useState, useEffect } from "react"
-import { Home, Wallet, Boxes, Settings, ShoppingCart, Receipt } from "lucide-react"
+import { Home, Wallet, Boxes, CheckSquare, Bot, Settings, ShoppingCart } from "lucide-react"
+
+import Card from "./components/Card"
+import Metric from "./components/Metric"
+import NavButton from "./components/NavButton"
 
 type Screen =
-| "inicio"
-| "finanzas"
-| "inventario"
-| "ventas"
-| "historial"
-| "config"
+  | "inicio"
+  | "finanzas"
+  | "inventario"
+  | "tareas"
+  | "ia"
+  | "config"
+  | "ventas"
 
-type Movement={
-id:number
-type:"ingreso"|"gasto"
-amount:number
-category:string
-payment?:string
+type Movement = {
+  id:number
+  type:"ingreso"|"gasto"
+  amount:number
+  category:string
+  payment?:string
 }
 
 type Product={
-id:number
-name:string
-stock:number
-price:number
+  id:number
+  name:string
+  stock:number
+  price:number
+}
+
+type Task={
+  id:number
+  title:string
+  done:boolean
 }
 
 const currency=(v:number)=>
@@ -30,10 +41,12 @@ new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(v)
 export default function App(){
 
 const[screen,setScreen]=useState<Screen>("inicio")
+
 const[businessName,setBusinessName]=useState("Mi Negocio")
 
 const[movements,setMovements]=useState<Movement[]>([])
 const[products,setProducts]=useState<Product[]>([])
+const[tasks,setTasks]=useState<Task[]>([])
 
 useEffect(()=>{
 
@@ -45,6 +58,7 @@ const data=JSON.parse(saved)
 
 setMovements(data.movements||[])
 setProducts(data.products||[])
+setTasks(data.tasks||[])
 setBusinessName(data.businessName||"Mi Negocio")
 
 }
@@ -54,10 +68,10 @@ setBusinessName(data.businessName||"Mi Negocio")
 useEffect(()=>{
 
 localStorage.setItem("startsmart-data",
-JSON.stringify({movements,products,businessName})
+JSON.stringify({movements,products,tasks,businessName})
 )
 
-},[movements,products,businessName])
+},[movements,products,tasks,businessName])
 
 const income=useMemo(()=>movements.filter(m=>m.type==="ingreso").reduce((s,m)=>s+m.amount,0),[movements])
 const expense=useMemo(()=>movements.filter(m=>m.type==="gasto").reduce((s,m)=>s+m.amount,0),[movements])
@@ -266,26 +280,6 @@ return(
 
 )}
 
-{screen==="historial"&&(
-
-<Card title="Historial de ventas">
-
-{movements.filter(m=>m.type==="ingreso").map(m=>(
-
-<div key={m.id} className="list-row">
-
-<span>{m.category} {m.payment?`(${m.payment})`:""}</span>
-
-<strong>{currency(m.amount)}</strong>
-
-</div>
-
-))}
-
-</Card>
-
-)}
-
 </main>
 
 <nav className="bottom-nav">
@@ -294,7 +288,6 @@ return(
 <NavButton current={screen} id="ventas" icon={<ShoppingCart size={18}/>} label="Ventas" onPress={setScreen}/>
 <NavButton current={screen} id="finanzas" icon={<Wallet size={18}/>} label="Finanzas" onPress={setScreen}/>
 <NavButton current={screen} id="inventario" icon={<Boxes size={18}/>} label="Inventario" onPress={setScreen}/>
-<NavButton current={screen} id="historial" icon={<Receipt size={18}/>} label="Historial" onPress={setScreen}/>
 <NavButton current={screen} id="config" icon={<Settings size={18}/>} label="Config" onPress={setScreen}/>
 
 </nav>
@@ -302,54 +295,6 @@ return(
 </div>
 
 </div>
-
-)
-
-}
-
-function Card({title,children}:{title?:string,children:React.ReactNode}){
-
-return(
-
-<section className="card">
-
-{title&&<h3>{title}</h3>}
-
-{children}
-
-</section>
-
-)
-
-}
-
-function Metric({label,value}:{label:string,value:string}){
-
-return(
-
-<div className="metric-box">
-
-<span>{label}</span>
-
-<strong>{value}</strong>
-
-</div>
-
-)
-
-}
-
-function NavButton({current,id,icon,label,onPress}:{current:Screen,id:Screen,icon:React.ReactNode,label:string,onPress:(v:Screen)=>void}){
-
-return(
-
-<button className={current===id?"nav-button active":"nav-button"} onClick={()=>onPress(id)}>
-
-{icon}
-
-<span>{label}</span>
-
-</button>
 
 )
 
