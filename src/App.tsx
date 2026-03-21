@@ -1,7 +1,7 @@
 import { useState } from "react"
 import "./styles.css"
 
-type Screen = "inicio" | "finanzas" | "inventario" | "tareas" | "ia" | "marketing"
+type Screen = "inicio" | "finanzas" | "inventario" | "tareas" | "ia"
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("inicio")
@@ -10,51 +10,42 @@ export default function App() {
     switch (screen) {
       case "inicio":
         return (
-          <div>
-            <h2>Dashboard</h2>
+          <>
+            <h2>Inicio</h2>
             <p>Bienvenido a StartSmart 🚀</p>
-            <p>Aquí verás el resumen de tu negocio.</p>
-          </div>
+          </>
         )
 
       case "finanzas":
         return (
-          <div>
+          <>
             <h2>Finanzas</h2>
-            <p>Aquí podrás registrar ingresos y gastos.</p>
-          </div>
+            <p>Aquí registrarás ingresos y gastos.</p>
+          </>
         )
 
       case "inventario":
         return (
-          <div>
+          <>
             <h2>Inventario</h2>
-            <p>Aquí controlarás tus productos y stock.</p>
-          </div>
+            <p>Controla tus productos.</p>
+          </>
         )
 
       case "tareas":
         return (
-          <div>
+          <>
             <h2>Tareas</h2>
-            <p>Organiza pendientes de tu negocio.</p>
-          </div>
+            <p>Organiza pendientes.</p>
+          </>
         )
 
       case "ia":
         return (
-          <div>
-            <h2>Asistente IA</h2>
-            <p>Obtén recomendaciones para mejorar tu negocio.</p>
-          </div>
-        )
-
-      case "marketing":
-        return (
-          <div>
-            <h2>Marketing</h2>
-            <p>Ideas para promocionar tus productos.</p>
-          </div>
+          <>
+            <h2>IA</h2>
+            <p>Asistente para tu negocio.</p>
+          </>
         )
     }
   }
@@ -62,19 +53,17 @@ export default function App() {
   return (
     <div className="app">
 
-      <div className="sidebar">
+      <div className="content">
         <h1>StartSmart</h1>
+        {renderScreen()}
+      </div>
 
+      <div className="bottom-nav">
         <button onClick={() => setScreen("inicio")}>Inicio</button>
         <button onClick={() => setScreen("finanzas")}>Finanzas</button>
         <button onClick={() => setScreen("inventario")}>Inventario</button>
         <button onClick={() => setScreen("tareas")}>Tareas</button>
         <button onClick={() => setScreen("ia")}>IA</button>
-        <button onClick={() => setScreen("marketing")}>Marketing</button>
-      </div>
-
-      <div className="main">
-        {renderScreen()}
       </div>
 
     </div>
