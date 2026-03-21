@@ -3,12 +3,42 @@ import { useState } from "react";
 type Screen = "inicio" | "ventas" | "finanzas" | "ia" | "marketing" | "historial" | "config";
 
 export default function App() {
+  const [logged, setLogged] = useState(false);
   const [screen, setScreen] = useState<Screen>("inicio");
+
+  if (!logged) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-950 text-white">
+        <div className="bg-slate-900 p-8 rounded-2xl w-80">
+          <h1 className="text-2xl font-bold mb-6 text-center text-green-400">
+            StartSmart
+          </h1>
+
+          <input
+            placeholder="Correo"
+            className="w-full mb-3 p-2 rounded bg-slate-800"
+          />
+
+          <input
+            type="password"
+            placeholder="Contraseña"
+            className="w-full mb-4 p-2 rounded bg-slate-800"
+          />
+
+          <button
+            onClick={() => setLogged(true)}
+            className="w-full bg-green-500 hover:bg-green-600 p-2 rounded"
+          >
+            Iniciar sesión
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-slate-950 text-white">
-      
-      {/* Sidebar */}
+
       <aside className="w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col gap-6">
         <h1 className="text-xl font-bold text-green-400">StartSmart</h1>
 
@@ -23,7 +53,6 @@ export default function App() {
         </nav>
       </aside>
 
-      {/* Main */}
       <main className="flex-1 p-10 overflow-auto">
 
         {screen === "inicio" && (
