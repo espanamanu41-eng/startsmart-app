@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Bell, Home, Wallet, Boxes, CheckSquare, Bot, Megaphone, Settings, LogOut } from "lucide-react";
+import { Home, Wallet, Boxes, CheckSquare, Bot, Megaphone, Settings, LogOut } from "lucide-react";
 
 type Screen =
   | "inicio"
@@ -46,19 +46,12 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  /* cargar usuario */
-
   useEffect(()=>{
-
     const savedUser = localStorage.getItem("user")
-
     if(savedUser){
       setUser(savedUser)
     }
-
   },[])
-
-  /* cargar datos del usuario */
 
   useEffect(()=>{
 
@@ -73,8 +66,6 @@ export default function App() {
     if(t) setTasks(JSON.parse(t))
 
   },[user])
-
-  /* guardar datos */
 
   useEffect(()=>{
     if(user){
@@ -107,21 +98,14 @@ export default function App() {
   const profit = income - expense
 
   function login(){
-
     if(!email) return
-
     setUser(email)
-
     localStorage.setItem("user",email)
-
   }
 
   function logout(){
-
     localStorage.removeItem("user")
-
     setUser(null)
-
   }
 
   function addMovement(type:"ingreso"|"gasto"){
@@ -183,8 +167,6 @@ export default function App() {
       )
     )
   }
-
-  /* LOGIN SCREEN */
 
   if(!user){
 
