@@ -1,6 +1,9 @@
 import { useMemo, useState, useEffect } from "react"
 import { Home, Wallet, Boxes, Settings, ShoppingCart } from "lucide-react"
 
+import { db } from "./firebase"
+import { collection, addDoc } from "firebase/firestore"
+
 import Card from "./components/Card"
 import Metric from "./components/Metric"
 import NavButton from "./components/NavButton"
@@ -73,6 +76,20 @@ const cashTotal=movements.filter(m=>m.payment==="efectivo").reduce((s,m)=>s+m.am
 const cardTotal=movements.filter(m=>m.payment==="tarjeta").reduce((s,m)=>s+m.amount,0)
 const transferTotal=movements.filter(m=>m.payment==="transferencia").reduce((s,m)=>s+m.amount,0)
 
+async function saveMovementFirebase(movement:Movement){
+
+try{
+
+await addDoc(collection(db,"movements"),movement)
+
+}catch(e){
+
+console.log("firebase error",e)
+
+}
+
+}
+
 function addProduct(){
 
 const name=prompt("Nombre producto")
@@ -106,7 +123,7 @@ setProducts(products.filter(p=>p.id!==product.id))
 
 }
 
-function sellProduct(product:Product){
+async function sellProduct(product:Product){
 
 if(product.stock<=0){
 
@@ -124,18 +141,22 @@ if(method==="3")payment="transferencia"
 
 setProducts(products.map(p=>p.id===product.id?{...p,stock:p.stock-1}:p))
 
-setMovements([...movements,{
+const movement={
 id:Date.now(),
 type:"ingreso",
 amount:product.price,
 category:product.name,
 payment,
 date:Date.now()
-}])
+}
+
+setMovements([...movements,movement])
+
+saveMovementFirebase(movement)
 
 }
 
-function quickSale(){
+async function quickSale(){
 
 const amount=Number(prompt("Cantidad"))
 
@@ -148,14 +169,18 @@ let payment="efectivo"
 if(method==="2")payment="tarjeta"
 if(method==="3")payment="transferencia"
 
-setMovements([...movements,{
+const movement={
 id:Date.now(),
 type:"ingreso",
 amount,
 category:"Venta rápida",
 payment,
 date:Date.now()
-}])
+}
+
+setMovements([...movements,movement])
+
+saveMovementFirebase(movement)
 
 }
 
