@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react"
-import { Home, Wallet, Boxes, CheckSquare, Bot, Megaphone, Settings, ShoppingCart } from "lucide-react"
+import { Home, Wallet, Boxes, CheckSquare, Bot, Settings, ShoppingCart } from "lucide-react"
 
 type Screen =
   | "inicio"
@@ -7,7 +7,6 @@ type Screen =
   | "inventario"
   | "tareas"
   | "ia"
-  | "marketing"
   | "config"
   | "ventas"
 
@@ -16,6 +15,7 @@ type Movement = {
   type: "ingreso" | "gasto"
   amount: number
   category: string
+  payment?: string
 }
 
 type Product = {
@@ -149,6 +149,15 @@ export default function App() {
       return
     }
 
+    const method = prompt(
+      "Método de pago:\n1 - efectivo\n2 - tarjeta\n3 - transferencia"
+    )
+
+    let payment = "efectivo"
+
+    if (method === "2") payment = "tarjeta"
+    if (method === "3") payment = "transferencia"
+
     setProducts(
       products.map((p) =>
         p.id === product.id ? { ...p, stock: p.stock - 1 } : p
@@ -162,6 +171,7 @@ export default function App() {
         type: "ingreso",
         amount: product.price,
         category: "Venta",
+        payment,
       },
     ])
   }
@@ -170,7 +180,7 @@ export default function App() {
     if (!aiInput) return
 
     const reply =
-      "Consejo IA: publica hoy una promoción o paquete especial."
+      "Consejo IA: prueba promociones de 2x1 hoy."
 
     setAiMessages([...aiMessages, "Tú: " + aiInput, reply])
     setAiInput("")
@@ -198,34 +208,18 @@ export default function App() {
                 <Metric label="Ganancia" value={currency(profit)} />
               </Card>
 
-              <Card title="Tareas">
-                {tasks.map((t) => (
-                  <div key={t.id} className="list-row">
-                    <span>{t.title}</span>
-                    <button
-                      onClick={() =>
-                        setTasks(
-                          tasks.map((x) =>
-                            x.id === t.id ? { ...x, done: !x.done } : x
-                          )
-                        )
-                      }
-                    >
-                      {t.done ? "✔" : "○"}
-                    </button>
-                  </div>
-                ))}
-
-                <button onClick={addTask}>+ Agregar tarea</button>
-              </Card>
             </div>
           )}
 
           {screen === "finanzas" && (
             <Card title="Movimientos">
+
               {movements.map((m) => (
                 <div key={m.id} className="list-row">
-                  <span>{m.category}</span>
+                  <span>
+                    {m.category} {m.payment ? "(" + m.payment + ")" : ""}
+                  </span>
+
                   <strong>
                     {m.type === "ingreso" ? "+" : "-"}
                     {currency(m.amount)}
@@ -236,6 +230,7 @@ export default function App() {
               <button onClick={addMovement}>
                 + Agregar movimiento
               </button>
+
             </Card>
           )}
 
@@ -289,17 +284,16 @@ export default function App() {
                   </div>
                 </Card>
               ))}
+              <button onClick={addTask}>+ Nueva tarea</button>
             </div>
           )}
 
           {screen === "ia" && (
             <Card title="Asistente IA">
 
-              <div style={{ marginBottom: 10 }}>
-                {aiMessages.map((m, i) => (
-                  <p key={i}>{m}</p>
-                ))}
-              </div>
+              {aiMessages.map((m, i) => (
+                <p key={i}>{m}</p>
+              ))}
 
               <input
                 value={aiInput}
@@ -309,13 +303,6 @@ export default function App() {
 
               <button onClick={sendAI}>Enviar</button>
 
-            </Card>
-          )}
-
-          {screen === "marketing" && (
-            <Card title="Ideas de Marketing">
-              <p>Publica una promoción hoy.</p>
-              <p>Ofrece descuento por tiempo limitado.</p>
             </Card>
           )}
 
@@ -336,13 +323,13 @@ export default function App() {
 
         <nav className="bottom-nav">
 
-          <NavButton current={screen} id="inicio" icon={<Home size={18} />} label="Inicio" onPress={setScreen}/>
-          <NavButton current={screen} id="ventas" icon={<ShoppingCart size={18} />} label="Ventas" onPress={setScreen}/>
-          <NavButton current={screen} id="finanzas" icon={<Wallet size={18} />} label="Finanzas" onPress={setScreen}/>
-          <NavButton current={screen} id="inventario" icon={<Boxes size={18} />} label="Inventario" onPress={setScreen}/>
-          <NavButton current={screen} id="tareas" icon={<CheckSquare size={18} />} label="Tareas" onPress={setScreen}/>
-          <NavButton current={screen} id="ia" icon={<Bot size={18} />} label="IA" onPress={setScreen}/>
-          <NavButton current={screen} id="config" icon={<Settings size={18} />} label="Config" onPress={setScreen}/>
+          <NavButton current={screen} id="inicio" icon={<Home size={18}/>} label="Inicio" onPress={setScreen}/>
+          <NavButton current={screen} id="ventas" icon={<ShoppingCart size={18}/>} label="Ventas" onPress={setScreen}/>
+          <NavButton current={screen} id="finanzas" icon={<Wallet size={18}/>} label="Finanzas" onPress={setScreen}/>
+          <NavButton current={screen} id="inventario" icon={<Boxes size={18}/>} label="Inventario" onPress={setScreen}/>
+          <NavButton current={screen} id="tareas" icon={<CheckSquare size={18}/>} label="Tareas" onPress={setScreen}/>
+          <NavButton current={screen} id="ia" icon={<Bot size={18}/>} label="IA" onPress={setScreen}/>
+          <NavButton current={screen} id="config" icon={<Settings size={18}/>} label="Config" onPress={setScreen}/>
 
         </nav>
 
@@ -354,7 +341,7 @@ export default function App() {
 function Card({title,children}:{title?:string,children:React.ReactNode}){
   return(
     <section className="card">
-      {title&&<h3>{title}</h3>}
+      {title && <h3>{title}</h3>}
       {children}
     </section>
   )
@@ -376,4 +363,4 @@ function NavButton({current,id,icon,label,onPress}:{current:Screen,id:Screen,ico
       <span>{label}</span>
     </button>
   )
-      }
+}
