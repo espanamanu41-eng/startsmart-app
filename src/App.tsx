@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react"
-import { Home, Wallet, Boxes, CheckSquare, Bot, Settings, ShoppingCart } from "lucide-react"
+import { Home, Wallet, Boxes, Settings, ShoppingCart } from "lucide-react"
 
 import Card from "./components/Card"
 import Metric from "./components/Metric"
@@ -9,8 +9,6 @@ type Screen =
   | "inicio"
   | "finanzas"
   | "inventario"
-  | "tareas"
-  | "ia"
   | "config"
   | "ventas"
 
@@ -20,6 +18,7 @@ type Movement = {
   amount:number
   category:string
   payment?:string
+  date:number
 }
 
 type Product={
@@ -27,12 +26,6 @@ type Product={
   name:string
   stock:number
   price:number
-}
-
-type Task={
-  id:number
-  title:string
-  done:boolean
 }
 
 const currency=(v:number)=>
@@ -46,7 +39,6 @@ const[businessName,setBusinessName]=useState("Mi Negocio")
 
 const[movements,setMovements]=useState<Movement[]>([])
 const[products,setProducts]=useState<Product[]>([])
-const[tasks,setTasks]=useState<Task[]>([])
 
 useEffect(()=>{
 
@@ -58,7 +50,6 @@ const data=JSON.parse(saved)
 
 setMovements(data.movements||[])
 setProducts(data.products||[])
-setTasks(data.tasks||[])
 setBusinessName(data.businessName||"Mi Negocio")
 
 }
@@ -68,10 +59,10 @@ setBusinessName(data.businessName||"Mi Negocio")
 useEffect(()=>{
 
 localStorage.setItem("startsmart-data",
-JSON.stringify({movements,products,tasks,businessName})
+JSON.stringify({movements,products,businessName})
 )
 
-},[movements,products,tasks,businessName])
+},[movements,products,businessName])
 
 const income=useMemo(()=>movements.filter(m=>m.type==="ingreso").reduce((s,m)=>s+m.amount,0),[movements])
 const expense=useMemo(()=>movements.filter(m=>m.type==="gasto").reduce((s,m)=>s+m.amount,0),[movements])
@@ -137,8 +128,9 @@ setMovements([...movements,{
 id:Date.now(),
 type:"ingreso",
 amount:product.price,
-category:"Venta",
-payment
+category:product.name,
+payment,
+date:Date.now()
 }])
 
 }
@@ -146,6 +138,8 @@ payment
 function quickSale(){
 
 const amount=Number(prompt("Cantidad"))
+
+if(!amount)return
 
 const method=prompt("Pago:\n1 efectivo\n2 tarjeta\n3 transferencia")
 
@@ -159,7 +153,8 @@ id:Date.now(),
 type:"ingreso",
 amount,
 category:"Venta rápida",
-payment
+payment,
+date:Date.now()
 }])
 
 }
@@ -205,15 +200,21 @@ return(
 
 {screen==="finanzas"&&(
 
-<Card title="Movimientos">
+<Card title="Historial">
 
-{movements.map(m=>(
+{movements.slice().reverse().map(m=>(
 
 <div key={m.id} className="list-row">
 
-<span>{m.category} {m.payment?`(${m.payment})`:""}</span>
+<span>
+{m.category}
+{m.payment?` (${m.payment})`:""}
+</span>
 
-<strong>{m.type==="ingreso"?"+":"-"}{currency(m.amount)}</strong>
+<strong>
+{m.type==="ingreso"?"+":"-"}
+{currency(m.amount)}
+</strong>
 
 </div>
 
