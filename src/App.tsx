@@ -21,8 +21,6 @@ type Product = {
   id: number;
   name: string;
   stock: number;
-  cost: number;
-  price: number;
 };
 
 type Task = {
@@ -66,12 +64,11 @@ export default function App() {
 
   const profit = income - expense;
 
-  function addMovement() {
+  function addMovement(type: "ingreso" | "gasto") {
     const amount = Number(prompt("Monto"));
-    const type = prompt("Tipo: ingreso o gasto") as "ingreso" | "gasto";
     const category = prompt("Categoría") || "General";
 
-    if (!amount || !type) return;
+    if (!amount) return;
 
     setMovements([
       ...movements,
@@ -87,8 +84,6 @@ export default function App() {
   function addProduct() {
     const name = prompt("Nombre del producto");
     const stock = Number(prompt("Stock"));
-    const cost = Number(prompt("Costo"));
-    const price = Number(prompt("Precio"));
 
     if (!name) return;
 
@@ -98,8 +93,6 @@ export default function App() {
         id: Date.now(),
         name,
         stock,
-        cost,
-        price,
       },
     ]);
   }
@@ -127,10 +120,10 @@ export default function App() {
 
     const userMsg = { from: "user", text: input };
 
-    let response = "Intenta publicar hoy una promoción.";
+    let response = "Intenta hacer una promoción hoy.";
 
     if (input.includes("vender")) {
-      response = "Publica una promoción en historias hoy a las 7pm.";
+      response = "Publica historias mostrando tu producto.";
     }
 
     if (input.includes("clientes")) {
@@ -145,6 +138,7 @@ export default function App() {
 
   return (
     <div className="phone-frame">
+
       <header className="hero-header">
         <div>
           <p className="brand-kicker">Impulsa</p>
@@ -156,18 +150,23 @@ export default function App() {
       <main className="screen-content">
 
         {screen === "inicio" && (
-          <div className="stack">
-            <Card title="Resumen">
-              <Metric label="Ingresos" value={currency(income)} />
-              <Metric label="Gastos" value={currency(expense)} />
-              <Metric label="Ganancia" value={currency(profit)} />
-            </Card>
-          </div>
+          <Card title="Resumen">
+            <Metric label="Ingresos" value={currency(income)} />
+            <Metric label="Gastos" value={currency(expense)} />
+            <Metric label="Ganancia" value={currency(profit)} />
+          </Card>
         )}
 
         {screen === "finanzas" && (
           <div className="stack">
-            <button onClick={addMovement}>+ Agregar movimiento</button>
+
+            <button onClick={() => addMovement("ingreso")}>
+              + Agregar ingreso
+            </button>
+
+            <button onClick={() => addMovement("gasto")}>
+              + Agregar gasto
+            </button>
 
             {movements.map((m) => (
               <Card key={m.id}>
@@ -180,12 +179,16 @@ export default function App() {
                 </div>
               </Card>
             ))}
+
           </div>
         )}
 
         {screen === "inventario" && (
           <div className="stack">
-            <button onClick={addProduct}>+ Agregar producto</button>
+
+            <button onClick={addProduct}>
+              + Agregar producto
+            </button>
 
             {products.map((p) => (
               <Card key={p.id}>
@@ -195,12 +198,16 @@ export default function App() {
                 </div>
               </Card>
             ))}
+
           </div>
         )}
 
         {screen === "tareas" && (
           <div className="stack">
-            <button onClick={addTask}>+ Nueva tarea</button>
+
+            <button onClick={addTask}>
+              + Nueva tarea
+            </button>
 
             {tasks.map((t) => (
               <Card key={t.id}>
@@ -212,30 +219,30 @@ export default function App() {
                 </div>
               </Card>
             ))}
+
           </div>
         )}
 
         {screen === "ia" && (
-          <div className="stack">
-            <Card title="Asistente IA">
-              <div>
-                {messages.map((m, i) => (
-                  <p key={i}>
-                    <strong>{m.from === "user" ? "Tú:" : "IA:"}</strong>{" "}
-                    {m.text}
-                  </p>
-                ))}
-              </div>
+          <Card title="Asistente IA">
 
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Pregunta algo..."
-              />
+            {messages.map((m, i) => (
+              <p key={i}>
+                <strong>{m.from === "user" ? "Tú:" : "IA:"}</strong> {m.text}
+              </p>
+            ))}
 
-              <button onClick={sendMessage}>Enviar</button>
-            </Card>
-          </div>
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Pregunta algo..."
+            />
+
+            <button onClick={sendMessage}>
+              Enviar
+            </button>
+
+          </Card>
         )}
 
         {screen === "marketing" && (
@@ -247,15 +254,14 @@ export default function App() {
 
         {screen === "config" && (
           <Card title="Configuración">
-            <p>Nombre del negocio</p>
-            <p>Moneda</p>
-            <p>Modo oscuro (próximamente)</p>
+            <p>Configuración de negocio próximamente.</p>
           </Card>
         )}
 
       </main>
 
       <nav className="bottom-nav">
+
         <NavButton current={screen} id="inicio" icon={<Home size={18} />} label="Inicio" onPress={setScreen}/>
         <NavButton current={screen} id="finanzas" icon={<Wallet size={18} />} label="Finanzas" onPress={setScreen}/>
         <NavButton current={screen} id="inventario" icon={<Boxes size={18} />} label="Inventario" onPress={setScreen}/>
@@ -263,7 +269,9 @@ export default function App() {
         <NavButton current={screen} id="ia" icon={<Bot size={18} />} label="IA" onPress={setScreen}/>
         <NavButton current={screen} id="marketing" icon={<Megaphone size={18} />} label="Marketing" onPress={setScreen}/>
         <NavButton current={screen} id="config" icon={<Settings size={18} />} label="Config" onPress={setScreen}/>
+
       </nav>
+
     </div>
   );
 }
