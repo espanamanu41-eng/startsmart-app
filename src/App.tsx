@@ -1,327 +1,97 @@
-import { useMemo, useState, useEffect } from "react"
-import { Home, Wallet, Boxes, Settings, ShoppingCart } from "lucide-react"
-
-import { db } from "./firebase"
-import { collection, addDoc } from "firebase/firestore"
-
-import Card from "./components/Card"
-import Metric from "./components/Metric"
-import NavButton from "./components/NavButton"
-
-type Screen =
-  | "inicio"
-  | "finanzas"
-  | "inventario"
-  | "config"
-  | "ventas"
-
-type Movement = {
-  id:number
-  type:"ingreso"|"gasto"
-  amount:number
-  category:string
-  payment?:string
-  date:number
-}
-
-type Product={
-  id:number
-  name:string
-  stock:number
-  price:number
-}
-
-const currency=(v:number)=>
-new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(v)
-
-export default function App(){
-
-const[screen,setScreen]=useState<Screen>("inicio")
-
-const[businessName,setBusinessName]=useState("Mi Negocio")
-
-const[movements,setMovements]=useState<Movement[]>([])
-const[products,setProducts]=useState<Product[]>([])
-
-useEffect(()=>{
-
-const saved=localStorage.getItem("startsmart-data")
-
-if(saved){
-
-const data=JSON.parse(saved)
-
-setMovements(data.movements||[])
-setProducts(data.products||[])
-setBusinessName(data.businessName||"Mi Negocio")
-
-}
-
-},[])
-
-useEffect(()=>{
-
-localStorage.setItem("startsmart-data",
-JSON.stringify({movements,products,businessName})
-)
-
-},[movements,products,businessName])
-
-const income=useMemo(()=>movements.filter(m=>m.type==="ingreso").reduce((s,m)=>s+m.amount,0),[movements])
-const expense=useMemo(()=>movements.filter(m=>m.type==="gasto").reduce((s,m)=>s+m.amount,0),[movements])
-
-const profit=income-expense
-
-const cashTotal=movements.filter(m=>m.payment==="efectivo").reduce((s,m)=>s+m.amount,0)
-const cardTotal=movements.filter(m=>m.payment==="tarjeta").reduce((s,m)=>s+m.amount,0)
-const transferTotal=movements.filter(m=>m.payment==="transferencia").reduce((s,m)=>s+m.amount,0)
-
-async function saveMovementFirebase(movement:Movement){
-
-try{
-
-await addDoc(collection(db,"movements"),movement)
-
-}catch(e){
-
-console.log("firebase error",e)
-
-}
-
-}
-
-function addProduct(){
-
-const name=prompt("Nombre producto")
-const stock=Number(prompt("Stock"))
-const price=Number(prompt("Precio"))
-
-if(!name)return
-
-setProducts([...products,{id:Date.now(),name,stock,price}])
-
-}
-
-function editProduct(product:Product){
-
-const newPrice=Number(prompt("Nuevo precio",String(product.price)))
-const newStock=Number(prompt("Nuevo stock",String(product.stock)))
-
-setProducts(products.map(p=>
-p.id===product.id
-?{...p,price:newPrice,stock:newStock}
-:p
-))
-
-}
-
-function deleteProduct(product:Product){
-
-if(!confirm("Eliminar producto?"))return
-
-setProducts(products.filter(p=>p.id!==product.id))
-
-}
-
-async function sellProduct(product:Product){
-
-if(product.stock<=0){
-
-alert("Sin stock")
-return
-
-}
-
-const method=prompt("Pago:\n1 efectivo\n2 tarjeta\n3 transferencia")
-
-let payment="efectivo"
-
-if(method==="2")payment="tarjeta"
-if(method==="3")payment="transferencia"
-
-setProducts(products.map(p=>p.id===product.id?{...p,stock:p.stock-1}:p))
-
-const movement={
-id:Date.now(),
-type:"ingreso",
-amount:product.price,
-category:product.name,
-payment,
-date:Date.now()
-}
-
-setMovements([...movements,movement])
-
-saveMovementFirebase(movement)
-
-}
-
-async function quickSale(){
-
-const amount=Number(prompt("Cantidad"))
-
-if(!amount)return
-
-const method=prompt("Pago:\n1 efectivo\n2 tarjeta\n3 transferencia")
-
-let payment="efectivo"
-
-if(method==="2")payment="tarjeta"
-if(method==="3")payment="transferencia"
-
-const movement={
-id:Date.now(),
-type:"ingreso",
-amount,
-category:"Venta rápida",
-payment,
-date:Date.now()
-}
-
-setMovements([...movements,movement])
-
-saveMovementFirebase(movement)
-
-}
-
-return(
-
-<div className="page-shell">
-
-<div className="phone-frame">
-
-<header className="hero-header">
-
-<p className="brand-kicker">{businessName}</p>
-<h1>StartSmart</h1>
-
-</header>
-
-<main className="screen-content">
-
-{screen==="inicio"&&(
-
-<div className="stack">
-
-<Card title="Resumen">
-
-<Metric label="Ingresos" value={currency(income)}/>
-<Metric label="Gastos" value={currency(expense)}/>
-<Metric label="Ganancia" value={currency(profit)}/>
-
-</Card>
-
-<Card title="Caja">
-
-<Metric label="Efectivo" value={currency(cashTotal)}/>
-<Metric label="Tarjeta" value={currency(cardTotal)}/>
-<Metric label="Transferencia" value={currency(transferTotal)}/>
-
-</Card>
-
-</div>
-
-)}
-
-{screen==="finanzas"&&(
-
-<Card title="Historial">
-
-{movements.slice().reverse().map(m=>(
-
-<div key={m.id} className="list-row">
-
-<span>
-{m.category}
-{m.payment?` (${m.payment})`:""}
-</span>
-
-<strong>
-{m.type==="ingreso"?"+":"-"}
-{currency(m.amount)}
-</strong>
-
-</div>
-
-))}
-
-<button onClick={quickSale}>Venta rápida</button>
-
-</Card>
-
-)}
-
-{screen==="inventario"&&(
-
-<div className="stack">
-
-{products.map(p=>(
-
-<Card key={p.id}>
-
-<div className="list-row">
-
-<span>{p.name}</span>
-
-<strong>{currency(p.price)} | Stock {p.stock}</strong>
-
-</div>
-
-<button onClick={()=>editProduct(p)}>Editar</button>
-<button onClick={()=>deleteProduct(p)}>Eliminar</button>
-
-</Card>
-
-))}
-
-<button onClick={addProduct}>Agregar producto</button>
-
-</div>
-
-)}
-
-{screen==="ventas"&&(
-
-<div className="stack">
-
-{products.map(p=>(
-
-<Card key={p.id}>
-
-<div className="list-row">
-
-<span>{p.name}</span>
-
-<strong>{currency(p.price)}</strong>
-
-</div>
-
-<button onClick={()=>sellProduct(p)}>Vender</button>
-
-</Card>
-
-))}
-
-</div>
-
-)}
-
-</main>
-
-<nav className="bottom-nav">
-
-<NavButton current={screen} id="inicio" icon={<Home size={18}/>} label="Inicio" onPress={setScreen}/>
-<NavButton current={screen} id="ventas" icon={<ShoppingCart size={18}/>} label="Ventas" onPress={setScreen}/>
-<NavButton current={screen} id="finanzas" icon={<Wallet size={18}/>} label="Finanzas" onPress={setScreen}/>
-<NavButton current={screen} id="inventario" icon={<Boxes size={18}/>} label="Inventario" onPress={setScreen}/>
-<NavButton current={screen} id="config" icon={<Settings size={18}/>} label="Config" onPress={setScreen}/>
-
-</nav>
-
-</div>
-
-</div>
-
-)
-
+import { useState } from "react";
+
+type Screen = "inicio" | "ventas" | "finanzas" | "ia" | "marketing" | "historial" | "config";
+
+export default function App() {
+  const [screen, setScreen] = useState<Screen>("inicio");
+
+  return (
+    <div className="flex h-screen bg-slate-950 text-white">
+      
+      {/* Sidebar */}
+      <aside className="w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col gap-6">
+        <h1 className="text-xl font-bold text-green-400">StartSmart</h1>
+
+        <nav className="flex flex-col gap-3 text-sm">
+          <button onClick={() => setScreen("inicio")} className="text-left hover:text-green-400">Inicio</button>
+          <button onClick={() => setScreen("ventas")} className="text-left hover:text-green-400">Ventas</button>
+          <button onClick={() => setScreen("finanzas")} className="text-left hover:text-green-400">Finanzas</button>
+          <button onClick={() => setScreen("ia")} className="text-left hover:text-green-400">IA</button>
+          <button onClick={() => setScreen("marketing")} className="text-left hover:text-green-400">Marketing</button>
+          <button onClick={() => setScreen("historial")} className="text-left hover:text-green-400">Historial</button>
+          <button onClick={() => setScreen("config")} className="text-left hover:text-green-400">Configuración</button>
+        </nav>
+      </aside>
+
+      {/* Main */}
+      <main className="flex-1 p-10 overflow-auto">
+
+        {screen === "inicio" && (
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Dashboard</h2>
+
+            <div className="grid grid-cols-3 gap-6">
+              <div className="bg-slate-900 p-6 rounded-2xl">
+                <p className="text-slate-400 text-sm">Ventas hoy</p>
+                <h3 className="text-2xl font-bold">$0</h3>
+              </div>
+
+              <div className="bg-slate-900 p-6 rounded-2xl">
+                <p className="text-slate-400 text-sm">Ingresos</p>
+                <h3 className="text-2xl font-bold">$0</h3>
+              </div>
+
+              <div className="bg-slate-900 p-6 rounded-2xl">
+                <p className="text-slate-400 text-sm">Gastos</p>
+                <h3 className="text-2xl font-bold">$0</h3>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {screen === "ventas" && (
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Ventas</h2>
+            <p className="text-slate-400">Aquí aparecerán tus ventas.</p>
+          </div>
+        )}
+
+        {screen === "finanzas" && (
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Finanzas</h2>
+            <p className="text-slate-400">Control de ingresos y gastos.</p>
+          </div>
+        )}
+
+        {screen === "ia" && (
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Asistente IA</h2>
+            <p className="text-slate-400">Aquí irá el asistente inteligente.</p>
+          </div>
+        )}
+
+        {screen === "marketing" && (
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Marketing</h2>
+            <p className="text-slate-400">Herramientas de marketing.</p>
+          </div>
+        )}
+
+        {screen === "historial" && (
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Historial</h2>
+            <p className="text-slate-400">Historial de movimientos.</p>
+          </div>
+        )}
+
+        {screen === "config" && (
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Configuración</h2>
+            <p className="text-slate-400">Ajustes de la aplicación.</p>
+          </div>
+        )}
+
+      </main>
+    </div>
+  );
 }
