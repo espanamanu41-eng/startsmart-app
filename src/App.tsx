@@ -32,7 +32,7 @@ export default function App(){
 
 const [screen,setScreen]=useState<Screen>('inicio')
 
-const [movements,setMovements]=useState<Movement[]>([
+const [movements]=useState<Movement[]>([
 {id:1,type:'ingreso',amount:1200,category:'Ventas'},
 {id:2,type:'gasto',amount:350,category:'Material'}
 ])
