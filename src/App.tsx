@@ -30,7 +30,6 @@ new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(v)
 export default function App(){
 
 const[screen,setScreen]=useState<Screen>("inicio")
-
 const[businessName,setBusinessName]=useState("Mi Negocio")
 
 const[movements,setMovements]=useState<Movement[]>([])
@@ -78,6 +77,27 @@ const price=Number(prompt("Precio"))
 if(!name)return
 
 setProducts([...products,{id:Date.now(),name,stock,price}])
+
+}
+
+function editProduct(product:Product){
+
+const newPrice=Number(prompt("Nuevo precio",String(product.price)))
+const newStock=Number(prompt("Nuevo stock",String(product.stock)))
+
+setProducts(products.map(p=>
+p.id===product.id
+?{...p,price:newPrice,stock:newStock}
+:p
+))
+
+}
+
+function deleteProduct(product:Product){
+
+if(!confirm("Eliminar producto?"))return
+
+setProducts(products.filter(p=>p.id!==product.id))
 
 }
 
@@ -207,6 +227,9 @@ return(
 
 </div>
 
+<button onClick={()=>editProduct(p)}>Editar</button>
+<button onClick={()=>deleteProduct(p)}>Eliminar</button>
+
 </Card>
 
 ))}
@@ -247,9 +270,7 @@ return(
 
 <Card title="Historial de ventas">
 
-{movements
-.filter(m=>m.type==="ingreso")
-.map(m=>(
+{movements.filter(m=>m.type==="ingreso").map(m=>(
 
 <div key={m.id} className="list-row">
 
