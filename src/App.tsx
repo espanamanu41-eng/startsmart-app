@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Bell, Home, Wallet, Boxes, CheckSquare, Bot, Megaphone, Settings } from "lucide-react";
 
 type Screen =
@@ -37,6 +37,7 @@ const currency = (v: number) =>
   }).format(v);
 
 export default function App() {
+
   const [screen, setScreen] = useState<Screen>("inicio");
 
   const [movements, setMovements] = useState<Movement[]>([]);
@@ -46,274 +47,374 @@ export default function App() {
   const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
   const [input, setInput] = useState("");
 
+  /* cargar datos guardados */
+
+  useEffect(() => {
+
+    const m = localStorage.getItem("movements")
+    const p = localStorage.getItem("products")
+    const t = localStorage.getItem("tasks")
+
+    if(m) setMovements(JSON.parse(m))
+    if(p) setProducts(JSON.parse(p))
+    if(t) setTasks(JSON.parse(t))
+
+  }, [])
+
+  /* guardar datos */
+
+  useEffect(()=>{
+    localStorage.setItem("movements",JSON.stringify(movements))
+  },[movements])
+
+  useEffect(()=>{
+    localStorage.setItem("products",JSON.stringify(products))
+  },[products])
+
+  useEffect(()=>{
+    localStorage.setItem("tasks",JSON.stringify(tasks))
+  },[tasks])
+
   const income = useMemo(
-    () =>
-      movements
-        .filter((m) => m.type === "ingreso")
-        .reduce((s, m) => s + m.amount, 0),
+    () => movements.filter(m=>m.type==="ingreso").reduce((s,m)=>s+m.amount,0),
     [movements]
-  );
+  )
 
   const expense = useMemo(
-    () =>
-      movements
-        .filter((m) => m.type === "gasto")
-        .reduce((s, m) => s + m.amount, 0),
+    () => movements.filter(m=>m.type==="gasto").reduce((s,m)=>s+m.amount,0),
     [movements]
-  );
+  )
 
-  const profit = income - expense;
+  const profit = income - expense
 
-  function addMovement(type: "ingreso" | "gasto") {
-    const amount = Number(prompt("Monto"));
-    const category = prompt("Categoría") || "General";
+  function addMovement(type:"ingreso"|"gasto"){
 
-    if (!amount) return;
+    const amount = Number(prompt("Monto"))
+    const category = prompt("Categoría") || "General"
+
+    if(!amount) return
 
     setMovements([
       ...movements,
       {
-        id: Date.now(),
+        id:Date.now(),
         type,
         amount,
-        category,
-      },
-    ]);
+        category
+      }
+    ])
   }
 
-  function addProduct() {
-    const name = prompt("Nombre del producto");
-    const stock = Number(prompt("Stock"));
+  function addProduct(){
 
-    if (!name) return;
+    const name = prompt("Nombre del producto")
+    const stock = Number(prompt("Stock"))
+
+    if(!name) return
 
     setProducts([
       ...products,
       {
-        id: Date.now(),
+        id:Date.now(),
         name,
-        stock,
-      },
-    ]);
+        stock
+      }
+    ])
   }
 
-  function addTask() {
-    const title = prompt("Nueva tarea");
-    if (!title) return;
+  function addTask(){
+
+    const title = prompt("Nueva tarea")
+
+    if(!title) return
 
     setTasks([
       ...tasks,
       {
-        id: Date.now(),
+        id:Date.now(),
         title,
-        done: false,
-      },
-    ]);
+        done:false
+      }
+    ])
   }
 
-  function toggleTask(id: number) {
-    setTasks(tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+  function toggleTask(id:number){
+
+    setTasks(
+      tasks.map(t =>
+        t.id===id ? {...t,done:!t.done} : t
+      )
+    )
   }
 
-  function sendMessage() {
-    if (!input) return;
+  function sendMessage(){
 
-    const userMsg = { from: "user", text: input };
+    if(!input) return
 
-    let response = "Intenta hacer una promoción hoy.";
+    const userMsg = {from:"user",text:input}
 
-    if (input.includes("vender")) {
-      response = "Publica historias mostrando tu producto.";
-    }
+    let response = "Publica una promoción hoy."
 
-    if (input.includes("clientes")) {
-      response = "Ofrece descuento a clientes frecuentes.";
-    }
+    if(input.includes("vender")) response="Publica historias mostrando tu producto."
+    if(input.includes("clientes")) response="Ofrece descuento a clientes frecuentes."
 
-    const aiMsg = { from: "ai", text: response };
+    const aiMsg = {from:"ai",text:response}
 
-    setMessages([...messages, userMsg, aiMsg]);
-    setInput("");
+    setMessages([...messages,userMsg,aiMsg])
+
+    setInput("")
   }
 
-  return (
-    <div className="phone-frame">
+  return(
 
-      <header className="hero-header">
-        <div>
-          <p className="brand-kicker">Impulsa</p>
-          <h1>Tu negocio</h1>
-        </div>
-        <Bell size={18} />
-      </header>
+<div className="page-shell">
 
-      <main className="screen-content">
+<div className="phone-frame">
 
-        {screen === "inicio" && (
-          <Card title="Resumen">
-            <Metric label="Ingresos" value={currency(income)} />
-            <Metric label="Gastos" value={currency(expense)} />
-            <Metric label="Ganancia" value={currency(profit)} />
-          </Card>
-        )}
+<header className="hero-header">
 
-        {screen === "finanzas" && (
-          <div className="stack">
+<div>
+<p className="brand-kicker">Impulsa</p>
+<h1>Tu negocio</h1>
+</div>
 
-            <button onClick={() => addMovement("ingreso")}>
-              + Agregar ingreso
-            </button>
+<Bell size={18}/>
 
-            <button onClick={() => addMovement("gasto")}>
-              + Agregar gasto
-            </button>
+</header>
 
-            {movements.map((m) => (
-              <Card key={m.id}>
-                <div className="list-row">
-                  <span>{m.category}</span>
-                  <strong>
-                    {m.type === "ingreso" ? "+" : "-"}
-                    {currency(m.amount)}
-                  </strong>
-                </div>
-              </Card>
-            ))}
+<main className="screen-content">
 
-          </div>
-        )}
+{screen==="inicio" &&(
 
-        {screen === "inventario" && (
-          <div className="stack">
+<div className="stack">
 
-            <button onClick={addProduct}>
-              + Agregar producto
-            </button>
+<Card title="Resumen">
 
-            {products.map((p) => (
-              <Card key={p.id}>
-                <div className="list-row">
-                  <span>{p.name}</span>
-                  <strong>Stock {p.stock}</strong>
-                </div>
-              </Card>
-            ))}
+<Metric label="Ingresos" value={currency(income)}/>
+<Metric label="Gastos" value={currency(expense)}/>
+<Metric label="Ganancia" value={currency(profit)}/>
 
-          </div>
-        )}
+</Card>
 
-        {screen === "tareas" && (
-          <div className="stack">
+</div>
 
-            <button onClick={addTask}>
-              + Nueva tarea
-            </button>
+)}
 
-            {tasks.map((t) => (
-              <Card key={t.id}>
-                <div className="list-row">
-                  <span>{t.title}</span>
-                  <button onClick={() => toggleTask(t.id)}>
-                    {t.done ? "✔" : "○"}
-                  </button>
-                </div>
-              </Card>
-            ))}
+{screen==="finanzas" &&(
 
-          </div>
-        )}
+<div className="stack">
 
-        {screen === "ia" && (
-          <Card title="Asistente IA">
+<button onClick={()=>addMovement("ingreso")}>
++ Agregar ingreso
+</button>
 
-            {messages.map((m, i) => (
-              <p key={i}>
-                <strong>{m.from === "user" ? "Tú:" : "IA:"}</strong> {m.text}
-              </p>
-            ))}
+<button onClick={()=>addMovement("gasto")}>
++ Agregar gasto
+</button>
 
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Pregunta algo..."
-            />
+{movements.map(m=>(
 
-            <button onClick={sendMessage}>
-              Enviar
-            </button>
+<Card key={m.id}>
 
-          </Card>
-        )}
+<div className="list-row">
 
-        {screen === "marketing" && (
-          <Card title="Ideas de marketing">
-            <p>Publica hoy una historia mostrando tu producto.</p>
-            <p>Ofrece 10% de descuento por tiempo limitado.</p>
-          </Card>
-        )}
+<span>{m.category}</span>
 
-        {screen === "config" && (
-          <Card title="Configuración">
-            <p>Configuración de negocio próximamente.</p>
-          </Card>
-        )}
+<strong>
+{m.type==="ingreso"?"+":"-"}
+{currency(m.amount)}
+</strong>
 
-      </main>
+</div>
 
-      <nav className="bottom-nav">
+</Card>
 
-        <NavButton current={screen} id="inicio" icon={<Home size={18} />} label="Inicio" onPress={setScreen}/>
-        <NavButton current={screen} id="finanzas" icon={<Wallet size={18} />} label="Finanzas" onPress={setScreen}/>
-        <NavButton current={screen} id="inventario" icon={<Boxes size={18} />} label="Inventario" onPress={setScreen}/>
-        <NavButton current={screen} id="tareas" icon={<CheckSquare size={18} />} label="Tareas" onPress={setScreen}/>
-        <NavButton current={screen} id="ia" icon={<Bot size={18} />} label="IA" onPress={setScreen}/>
-        <NavButton current={screen} id="marketing" icon={<Megaphone size={18} />} label="Marketing" onPress={setScreen}/>
-        <NavButton current={screen} id="config" icon={<Settings size={18} />} label="Config" onPress={setScreen}/>
+))}
 
-      </nav>
+</div>
 
-    </div>
-  );
+)}
+
+{screen==="inventario" &&(
+
+<div className="stack">
+
+<button onClick={addProduct}>
++ Agregar producto
+</button>
+
+{products.map(p=>(
+
+<Card key={p.id}>
+
+<div className="list-row">
+
+<span>{p.name}</span>
+<strong>Stock {p.stock}</strong>
+
+</div>
+
+</Card>
+
+))}
+
+</div>
+
+)}
+
+{screen==="tareas" &&(
+
+<div className="stack">
+
+<button onClick={addTask}>
++ Nueva tarea
+</button>
+
+{tasks.map(t=>(
+
+<Card key={t.id}>
+
+<div className="list-row">
+
+<span>{t.title}</span>
+
+<button onClick={()=>toggleTask(t.id)}>
+{t.done?"✔":"○"}
+</button>
+
+</div>
+
+</Card>
+
+))}
+
+</div>
+
+)}
+
+{screen==="ia" &&(
+
+<Card title="Asistente IA">
+
+{messages.map((m,i)=>(
+<p key={i}>
+<strong>{m.from==="user"?"Tú":"IA"}:</strong> {m.text}
+</p>
+))}
+
+<input
+value={input}
+onChange={(e)=>setInput(e.target.value)}
+placeholder="Pregunta algo..."
+/>
+
+<button onClick={sendMessage}>
+Enviar
+</button>
+
+</Card>
+
+)}
+
+{screen==="marketing" &&(
+
+<Card title="Ideas marketing">
+
+<p>Publica una historia mostrando tu producto.</p>
+<p>Ofrece descuento por tiempo limitado.</p>
+
+</Card>
+
+)}
+
+{screen==="config" &&(
+
+<Card title="Configuración">
+
+<p>Configuración próximamente.</p>
+
+</Card>
+
+)}
+
+</main>
+
+<nav className="bottom-nav">
+
+<NavButton current={screen} id="inicio" icon={<Home size={18}/>} label="Inicio" onPress={setScreen}/>
+<NavButton current={screen} id="finanzas" icon={<Wallet size={18}/>} label="Finanzas" onPress={setScreen}/>
+<NavButton current={screen} id="inventario" icon={<Boxes size={18}/>} label="Inventario" onPress={setScreen}/>
+<NavButton current={screen} id="tareas" icon={<CheckSquare size={18}/>} label="Tareas" onPress={setScreen}/>
+<NavButton current={screen} id="ia" icon={<Bot size={18}/>} label="IA" onPress={setScreen}/>
+<NavButton current={screen} id="marketing" icon={<Megaphone size={18}/>} label="Marketing" onPress={setScreen}/>
+<NavButton current={screen} id="config" icon={<Settings size={18}/>} label="Config" onPress={setScreen}/>
+
+</nav>
+
+</div>
+</div>
+
+)
+
 }
 
-function Card({ title, children }: { title?: string; children: React.ReactNode }) {
-  return (
-    <section className="card">
-      {title && <h3>{title}</h3>}
-      {children}
-    </section>
-  );
+function Card({title,children}:{title?:string,children:React.ReactNode}){
+
+return(
+
+<section className="card">
+
+{title && <h3>{title}</h3>}
+
+{children}
+
+</section>
+
+)
+
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="metric-box">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
+function Metric({label,value}:{label:string,value:string}){
+
+return(
+
+<div className="metric-box">
+
+<span>{label}</span>
+<strong>{value}</strong>
+
+</div>
+
+)
+
 }
 
 function NavButton({
-  current,
-  id,
-  icon,
-  label,
-  onPress,
-}: {
-  current: Screen;
-  id: Screen;
-  icon: React.ReactNode;
-  label: string;
-  onPress: (v: Screen) => void;
-}) {
-  return (
-    <button
-      className={current === id ? "nav-button active" : "nav-button"}
-      onClick={() => onPress(id)}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
+current,
+id,
+icon,
+label,
+onPress
+}:{
+current:Screen
+id:Screen
+icon:React.ReactNode
+label:string
+onPress:(v:Screen)=>void
+}){
+
+return(
+
+<button
+className={current===id?"nav-button active":"nav-button"}
+onClick={()=>onPress(id)}
+>
+
+{icon}
+<span>{label}</span>
+
+</button>
+
+)
+
 }
