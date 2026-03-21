@@ -1,15 +1,10 @@
-import { useState } from "react";
+import { useState } from "react"
+import "./styles.css"
 
-type Screen =
-  | "inicio"
-  | "finanzas"
-  | "inventario"
-  | "tareas"
-  | "ia"
-  | "marketing";
+type Screen = "inicio" | "finanzas" | "inventario" | "tareas" | "ia" | "marketing"
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>("inicio");
+  const [screen, setScreen] = useState<Screen>("inicio")
 
   const renderScreen = () => {
     switch (screen) {
@@ -20,23 +15,23 @@ export default function App() {
             <p>Bienvenido a StartSmart 🚀</p>
             <p>Aquí verás el resumen de tu negocio.</p>
           </div>
-        );
+        )
 
       case "finanzas":
         return (
           <div>
             <h2>Finanzas</h2>
-            <p>Registra ingresos y gastos.</p>
+            <p>Aquí podrás registrar ingresos y gastos.</p>
           </div>
-        );
+        )
 
       case "inventario":
         return (
           <div>
             <h2>Inventario</h2>
-            <p>Controla productos y stock.</p>
+            <p>Aquí controlarás tus productos y stock.</p>
           </div>
-        );
+        )
 
       case "tareas":
         return (
@@ -44,15 +39,15 @@ export default function App() {
             <h2>Tareas</h2>
             <p>Organiza pendientes de tu negocio.</p>
           </div>
-        );
+        )
 
       case "ia":
         return (
           <div>
             <h2>Asistente IA</h2>
-            <p>Obtén consejos para tu negocio.</p>
+            <p>Obtén recomendaciones para mejorar tu negocio.</p>
           </div>
-        );
+        )
 
       case "marketing":
         return (
@@ -60,24 +55,28 @@ export default function App() {
             <h2>Marketing</h2>
             <p>Ideas para promocionar tus productos.</p>
           </div>
-        );
+        )
     }
-  };
+  }
 
   return (
-    <div style={{ fontFamily: "sans-serif", padding: 20 }}>
-      <h1>StartSmart</h1>
+    <div className="app">
 
-      <nav style={{ marginBottom: 20 }}>
+      <div className="sidebar">
+        <h1>StartSmart</h1>
+
         <button onClick={() => setScreen("inicio")}>Inicio</button>
         <button onClick={() => setScreen("finanzas")}>Finanzas</button>
         <button onClick={() => setScreen("inventario")}>Inventario</button>
         <button onClick={() => setScreen("tareas")}>Tareas</button>
         <button onClick={() => setScreen("ia")}>IA</button>
         <button onClick={() => setScreen("marketing")}>Marketing</button>
-      </nav>
+      </div>
 
-      <div>{renderScreen()}</div>
+      <div className="main">
+        {renderScreen()}
+      </div>
+
     </div>
-  );
+  )
 }
