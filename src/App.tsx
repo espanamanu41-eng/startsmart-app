@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Bell, Home, Wallet, Boxes, CheckSquare, Bot, Megaphone, Settings } from "lucide-react";
+import { Bell, Home, Wallet, Boxes, CheckSquare, Bot, Megaphone, Settings, LogOut } from "lucide-react";
 
 type Screen =
   | "inicio"
@@ -38,42 +38,61 @@ const currency = (v: number) =>
 
 export default function App() {
 
+  const [user,setUser] = useState<string | null>(null)
+  const [email,setEmail] = useState("")
   const [screen, setScreen] = useState<Screen>("inicio");
 
   const [movements, setMovements] = useState<Movement[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
-  const [input, setInput] = useState("");
+  /* cargar usuario */
 
-  /* cargar datos guardados */
+  useEffect(()=>{
 
-  useEffect(() => {
+    const savedUser = localStorage.getItem("user")
 
-    const m = localStorage.getItem("movements")
-    const p = localStorage.getItem("products")
-    const t = localStorage.getItem("tasks")
+    if(savedUser){
+      setUser(savedUser)
+    }
+
+  },[])
+
+  /* cargar datos del usuario */
+
+  useEffect(()=>{
+
+    if(!user) return
+
+    const m = localStorage.getItem("movements-"+user)
+    const p = localStorage.getItem("products-"+user)
+    const t = localStorage.getItem("tasks-"+user)
 
     if(m) setMovements(JSON.parse(m))
     if(p) setProducts(JSON.parse(p))
     if(t) setTasks(JSON.parse(t))
 
-  }, [])
+  },[user])
 
   /* guardar datos */
 
   useEffect(()=>{
-    localStorage.setItem("movements",JSON.stringify(movements))
-  },[movements])
+    if(user){
+      localStorage.setItem("movements-"+user,JSON.stringify(movements))
+    }
+  },[movements,user])
 
   useEffect(()=>{
-    localStorage.setItem("products",JSON.stringify(products))
-  },[products])
+    if(user){
+      localStorage.setItem("products-"+user,JSON.stringify(products))
+    }
+  },[products,user])
 
   useEffect(()=>{
-    localStorage.setItem("tasks",JSON.stringify(tasks))
-  },[tasks])
+    if(user){
+      localStorage.setItem("tasks-"+user,JSON.stringify(tasks))
+    }
+  },[tasks,user])
 
   const income = useMemo(
     () => movements.filter(m=>m.type==="ingreso").reduce((s,m)=>s+m.amount,0),
@@ -86,6 +105,24 @@ export default function App() {
   )
 
   const profit = income - expense
+
+  function login(){
+
+    if(!email) return
+
+    setUser(email)
+
+    localStorage.setItem("user",email)
+
+  }
+
+  function logout(){
+
+    localStorage.removeItem("user")
+
+    setUser(null)
+
+  }
 
   function addMovement(type:"ingreso"|"gasto"){
 
@@ -147,22 +184,34 @@ export default function App() {
     )
   }
 
-  function sendMessage(){
+  /* LOGIN SCREEN */
 
-    if(!input) return
+  if(!user){
 
-    const userMsg = {from:"user",text:input}
+    return(
 
-    let response = "Publica una promoción hoy."
+<div style={{padding:40,fontFamily:"system-ui"}}>
 
-    if(input.includes("vender")) response="Publica historias mostrando tu producto."
-    if(input.includes("clientes")) response="Ofrece descuento a clientes frecuentes."
+<h1>StartSmart</h1>
 
-    const aiMsg = {from:"ai",text:response}
+<p>Accede a tu negocio</p>
 
-    setMessages([...messages,userMsg,aiMsg])
+<input
+placeholder="Correo"
+value={email}
+onChange={(e)=>setEmail(e.target.value)}
+/>
 
-    setInput("")
+<br/><br/>
+
+<button onClick={login}>
+Entrar
+</button>
+
+</div>
+
+)
+
   }
 
   return(
@@ -174,11 +223,13 @@ export default function App() {
 <header className="hero-header">
 
 <div>
-<p className="brand-kicker">Impulsa</p>
+<p className="brand-kicker">StartSmart</p>
 <h1>Tu negocio</h1>
 </div>
 
-<Bell size={18}/>
+<button onClick={logout}>
+<LogOut size={18}/>
+</button>
 
 </header>
 
@@ -205,11 +256,11 @@ export default function App() {
 <div className="stack">
 
 <button onClick={()=>addMovement("ingreso")}>
-+ Agregar ingreso
++ Ingreso
 </button>
 
 <button onClick={()=>addMovement("gasto")}>
-+ Agregar gasto
++ Gasto
 </button>
 
 {movements.map(m=>(
@@ -240,7 +291,7 @@ export default function App() {
 <div className="stack">
 
 <button onClick={addProduct}>
-+ Agregar producto
++ Producto
 </button>
 
 {products.map(p=>(
@@ -267,7 +318,7 @@ export default function App() {
 <div className="stack">
 
 <button onClick={addTask}>
-+ Nueva tarea
++ Tarea
 </button>
 
 {tasks.map(t=>(
@@ -296,21 +347,7 @@ export default function App() {
 
 <Card title="Asistente IA">
 
-{messages.map((m,i)=>(
-<p key={i}>
-<strong>{m.from==="user"?"Tú":"IA"}:</strong> {m.text}
-</p>
-))}
-
-<input
-value={input}
-onChange={(e)=>setInput(e.target.value)}
-placeholder="Pregunta algo..."
-/>
-
-<button onClick={sendMessage}>
-Enviar
-</button>
+<p>Consejo: publica una promoción hoy.</p>
 
 </Card>
 
@@ -318,10 +355,9 @@ Enviar
 
 {screen==="marketing" &&(
 
-<Card title="Ideas marketing">
+<Card title="Marketing">
 
-<p>Publica una historia mostrando tu producto.</p>
-<p>Ofrece descuento por tiempo limitado.</p>
+<p>Publica historias mostrando tu producto.</p>
 
 </Card>
 
@@ -331,7 +367,7 @@ Enviar
 
 <Card title="Configuración">
 
-<p>Configuración próximamente.</p>
+<p>Más opciones próximamente.</p>
 
 </Card>
 
