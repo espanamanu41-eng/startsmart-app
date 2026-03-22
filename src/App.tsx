@@ -353,9 +353,7 @@ export default function App() {
                   <LineChart data={ventasPorDia}>
 
                     <XAxis dataKey="fecha" />
-
                     <YAxis />
-
                     <Tooltip />
 
                     <Line
@@ -394,3 +392,5 @@ export default function App() {
   );
 
 }
+
+export {};
