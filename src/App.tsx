@@ -12,6 +12,7 @@ type Screen =
 type Movimiento = {
   nombre: string;
   precio: number;
+  fecha: string;
 };
 
 export default function App() {
@@ -98,7 +99,8 @@ export default function App() {
 
     const nuevaVenta = {
       nombre: producto,
-      precio: Number(precio)
+      precio: Number(precio),
+      fecha: new Date().toLocaleDateString()
     };
 
     setVentas([...ventas, nuevaVenta]);
@@ -116,7 +118,8 @@ export default function App() {
 
     const nuevoGasto = {
       nombre: gastoNombre,
-      precio: Number(gastoPrecio)
+      precio: Number(gastoPrecio),
+      fecha: new Date().toLocaleDateString()
     };
 
     setGastos([...gastos, nuevoGasto]);
@@ -125,15 +128,25 @@ export default function App() {
     setGastoPrecio("");
   }
 
-  /* NUEVO: borrar venta */
   function borrarVenta(index: number) {
+
+    const confirmar = confirm("¿Eliminar esta venta?");
+
+    if (!confirmar) return;
+
     const nuevasVentas = ventas.filter((_, i) => i !== index);
+
     setVentas(nuevasVentas);
   }
 
-  /* NUEVO: borrar gasto */
   function borrarGasto(index: number) {
+
+    const confirmar = confirm("¿Eliminar este gasto?");
+
+    if (!confirmar) return;
+
     const nuevosGastos = gastos.filter((_, i) => i !== index);
+
     setGastos(nuevosGastos);
   }
 
@@ -148,6 +161,12 @@ export default function App() {
   const porcentajeGanancia = totalVentas
     ? (ganancia / totalVentas) * 100
     : 0;
+
+  const hoy = new Date().toLocaleDateString();
+
+  const ventasHoy = ventas
+    .filter((v) => v.fecha === hoy)
+    .reduce((acc, v) => acc + v.precio, 0);
 
   if (!logged) {
 
@@ -218,6 +237,11 @@ export default function App() {
               </div>
 
               <div className="bg-slate-900 p-5 rounded-xl">
+                <p className="text-slate-400 text-sm">Ventas hoy</p>
+                <h3 className="text-xl font-bold">${ventasHoy}</h3>
+              </div>
+
+              <div className="bg-slate-900 p-5 rounded-xl">
                 <p className="text-slate-400 text-sm">Ingresos</p>
                 <h3 className="text-xl font-bold">${totalVentas}</h3>
               </div>
@@ -276,7 +300,10 @@ export default function App() {
                   className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center"
                 >
 
-                  <span>{v.nombre}</span>
+                  <div>
+                    <span>{v.nombre}</span>
+                    <p className="text-xs text-slate-400">{v.fecha}</p>
+                  </div>
 
                   <div className="flex items-center gap-3">
 
@@ -339,7 +366,10 @@ export default function App() {
                   className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center"
                 >
 
-                  <span>{g.nombre}</span>
+                  <div>
+                    <span>{g.nombre}</span>
+                    <p className="text-xs text-slate-400">{g.fecha}</p>
+                  </div>
 
                   <div className="flex items-center gap-3">
 
