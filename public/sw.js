@@ -1,12 +1,16 @@
-const CACHE_NAME = "startsmart-cache-v2";
+const CACHE_NAME = "startsmart-cache-v3";
 
 const urlsToCache = [
   "/",
   "/index.html",
-  "/manifest.json"
+  "/manifest.json",
+  "/icon-192.png",
+  "/icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
+  self.skipWaiting(); // activa inmediatamente
+
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(urlsToCache);
@@ -26,6 +30,8 @@ self.addEventListener("activate", (event) => {
       );
     })
   );
+
+  return self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
