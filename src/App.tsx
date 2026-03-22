@@ -1,54 +1,54 @@
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
-type Screen = "inicio" | "ventas" | "finanzas" | "historial" | "marketing";
+type Screen = "inicio" | "ventas" | "finanzas" | "historial";
 
 type Movimiento = {
-  nombre: string;
-  precio: number;
-  fecha: string;
-  tipo?: "venta" | "gasto";
-};
+nombre:string
+precio:number
+fecha:string
+tipo?: "venta" | "gasto"
+}
 
 type HistorialFijo = {
-  nombre: string;
-  movimientos: Movimiento[];
-};
+nombre:string
+movimientos:Movimiento[]
+}
 
-export default function App() {
+export default function App(){
 
-const [logged, setLogged] = useState(false);
-const [screen, setScreen] = useState<Screen>("inicio");
+const [logged,setLogged]=useState(false)
+const [screen,setScreen]=useState<Screen>("inicio")
 
-const [email, setEmail] = useState("");
-const [password, setPassword] = useState("");
-const [isRegister, setIsRegister] = useState(false);
+const [email,setEmail]=useState("")
+const [password,setPassword]=useState("")
+const [isRegister,setIsRegister]=useState(false)
 
-const [ventas, setVentas] = useState<Movimiento[]>(() => {
-const data = localStorage.getItem("ventas");
-return data ? JSON.parse(data) : [];
-});
+const [ventas,setVentas]=useState<Movimiento[]>(()=>{
+const data=localStorage.getItem("ventas")
+return data?JSON.parse(data):[]
+})
 
-const [gastos, setGastos] = useState<Movimiento[]>(() => {
-const data = localStorage.getItem("gastos");
-return data ? JSON.parse(data) : [];
-});
+const [gastos,setGastos]=useState<Movimiento[]>(()=>{
+const data=localStorage.getItem("gastos")
+return data?JSON.parse(data):[]
+})
 
-const [historialesFijos, setHistorialesFijos] = useState<HistorialFijo[]>(() => {
-const data = localStorage.getItem("historialesFijos");
-return data ? JSON.parse(data) : [];
-});
+const [historialesFijos,setHistorialesFijos]=useState<HistorialFijo[]>(()=>{
+const data=localStorage.getItem("historialesFijos")
+return data?JSON.parse(data):[]
+})
 
-const [nuevoHistorial,setNuevoHistorial] = useState("");
-const [historialActivo,setHistorialActivo] = useState<number | null>(null);
-const [movNombre,setMovNombre] = useState("");
-const [movPrecio,setMovPrecio] = useState("");
+const [producto,setProducto]=useState("")
+const [precio,setPrecio]=useState("")
 
-const [producto, setProducto] = useState("");
-const [precio, setPrecio] = useState("");
+const [gastoNombre,setGastoNombre]=useState("")
+const [gastoPrecio,setGastoPrecio]=useState("")
 
-const [gastoNombre, setGastoNombre] = useState("");
-const [gastoPrecio, setGastoPrecio] = useState("");
+const [nuevoHistorial,setNuevoHistorial]=useState("")
+const [historialActivo,setHistorialActivo]=useState<number|null>(null)
+const [movNombre,setMovNombre]=useState("")
+const [movPrecio,setMovPrecio]=useState("")
 
 useEffect(()=>{
 localStorage.setItem("ventas",JSON.stringify(ventas))
@@ -64,21 +64,21 @@ localStorage.setItem("historialesFijos",JSON.stringify(historialesFijos))
 
 function handleLogin(){
 
-if(!email || !password){
+if(!email||!password){
 alert("Debes llenar correo y contraseña")
 return
 }
 
-const savedUser = localStorage.getItem("user")
+const savedUser=localStorage.getItem("user")
 
 if(!savedUser){
 alert("Usuario no registrado")
 return
 }
 
-const user = JSON.parse(savedUser)
+const user=JSON.parse(savedUser)
 
-if(user.email === email && user.password === password){
+if(user.email===email && user.password===password){
 setLogged(true)
 }else{
 alert("Correo o contraseña incorrectos")
@@ -88,13 +88,12 @@ alert("Correo o contraseña incorrectos")
 
 function handleRegister(){
 
-if(!email || !password){
+if(!email||!password){
 alert("Debes llenar correo y contraseña")
 return
 }
 
 localStorage.setItem("user",JSON.stringify({email,password}))
-
 alert("Usuario registrado")
 setIsRegister(false)
 
@@ -102,12 +101,12 @@ setIsRegister(false)
 
 function agregarVenta(){
 
-if(!producto || !precio){
+if(!producto||!precio){
 alert("Debes llenar producto y precio")
 return
 }
 
-const nuevaVenta = {
+const nuevaVenta={
 nombre:producto,
 precio:Number(precio),
 fecha:new Date().toLocaleDateString(),
@@ -117,17 +116,16 @@ tipo:"venta"
 setVentas([...ventas,nuevaVenta])
 setProducto("")
 setPrecio("")
-
 }
 
 function agregarGasto(){
 
-if(!gastoNombre || !gastoPrecio){
+if(!gastoNombre||!gastoPrecio){
 alert("Debes llenar gasto y monto")
 return
 }
 
-const nuevoGasto = {
+const nuevoGasto={
 nombre:gastoNombre,
 precio:Number(gastoPrecio),
 fecha:new Date().toLocaleDateString(),
@@ -137,20 +135,18 @@ tipo:"gasto"
 setGastos([...gastos,nuevoGasto])
 setGastoNombre("")
 setGastoPrecio("")
-
 }
 
-function borrarVenta(index:number){
-if(!confirm("¿Eliminar venta?")) return
-setVentas(ventas.filter((_,i)=> i !== index))
+function borrarVenta(i:number){
+setVentas(ventas.filter((_,index)=>index!==i))
 }
 
-function borrarGasto(index:number){
-if(!confirm("¿Eliminar gasto?")) return
-setGastos(gastos.filter((_,i)=> i !== index))
+function borrarGasto(i:number){
+setGastos(gastos.filter((_,index)=>index!==i))
 }
 
 function crearHistorial(){
+
 if(!nuevoHistorial){
 alert("Escribe nombre")
 return
@@ -166,12 +162,7 @@ setNuevoHistorial("")
 
 function agregarMovimientoHistorial(){
 
-if(historialActivo === null) return
-
-if(!movNombre || !movPrecio){
-alert("Debes escribir nombre y precio")
-return
-}
+if(historialActivo===null) return
 
 const copia=[...historialesFijos]
 
@@ -182,74 +173,46 @@ fecha:new Date().toLocaleDateString()
 })
 
 setHistorialesFijos(copia)
+
 setMovNombre("")
 setMovPrecio("")
 }
 
 function borrarMovimientoHistorial(index:number){
 
-if(historialActivo === null) return
+if(historialActivo===null) return
 
 const copia=[...historialesFijos]
 
-copia[historialActivo].movimientos =
-copia[historialActivo].movimientos.filter((_,i)=> i!==index)
+copia[historialActivo].movimientos=
+copia[historialActivo].movimientos.filter((_,i)=>i!==index)
 
 setHistorialesFijos(copia)
 }
 
-const historialGeneral = [
-...ventas.map(v => ({...v,tipo:"venta"})),
-...gastos.map(g => ({...g,tipo:"gasto"}))
-].sort((a,b)=> new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+const historialGeneral=[
+...ventas.map(v=>({...v,tipo:"venta"})),
+...gastos.map(g=>({...g,tipo:"gasto"}))
+]
 
-const totalVentas = ventas.reduce((acc,v)=> acc + v.precio,0)
-const totalGastos = gastos.reduce((acc,g)=> acc + g.precio,0)
-const ganancia = totalVentas - totalGastos
+const totalVentas=ventas.reduce((acc,v)=>acc+v.precio,0)
+const totalGastos=gastos.reduce((acc,g)=>acc+g.precio,0)
+const ganancia=totalVentas-totalGastos
 
-const hoy = new Date().toLocaleDateString()
+const hoy=new Date().toLocaleDateString()
 
-const ventasHoy = ventas
-.filter(v=> v.fecha === hoy)
-.reduce((acc,v)=> acc + v.precio,0)
+const ventasHoy=ventas
+.filter(v=>v.fecha===hoy)
+.reduce((acc,v)=>acc+v.precio,0)
 
-const ventasPorDia = ventas.reduce((acc:any,venta)=>{
+const ventasPorDia=ventas.reduce((acc:any,venta)=>{
 
-const existe = acc.find((d:any)=> d.fecha === venta.fecha)
-
-if(existe){
-existe.total += venta.precio
-}else{
-acc.push({
-fecha:venta.fecha,
-total:venta.precio
-})
-}
-
-return acc
-
-},[])
-
-const finanzasPorDia = historialGeneral.reduce((acc:any,mov)=>{
-
-const existe = acc.find((d:any)=> d.fecha === mov.fecha)
+const existe=acc.find((d:any)=>d.fecha===venta.fecha)
 
 if(existe){
-
-if(mov.tipo === "venta"){
-existe.ventas += mov.precio
+existe.total+=venta.precio
 }else{
-existe.gastos += mov.precio
-}
-
-}else{
-
-acc.push({
-fecha:mov.fecha,
-ventas: mov.tipo === "venta" ? mov.precio : 0,
-gastos: mov.tipo === "gasto" ? mov.precio : 0
-})
-
+acc.push({fecha:venta.fecha,total:venta.precio})
 }
 
 return acc
@@ -268,41 +231,32 @@ return(
 StartSmart
 </h1>
 
-<input
-placeholder="Correo"
+<input placeholder="Correo"
 value={email}
 onChange={(e)=>setEmail(e.target.value)}
-className="w-full mb-3 p-3 rounded bg-slate-800"
-/>
+className="w-full mb-3 p-3 rounded bg-slate-800"/>
 
-<input
-type="password"
+<input type="password"
 placeholder="Contraseña"
 value={password}
 onChange={(e)=>setPassword(e.target.value)}
-className="w-full mb-4 p-3 rounded bg-slate-800"
-/>
+className="w-full mb-4 p-3 rounded bg-slate-800"/>
 
 <button
-onClick={isRegister ? handleRegister : handleLogin}
-className="w-full bg-green-500 p-3 rounded"
->
-{isRegister ? "Registrarse" : "Iniciar sesión"}
+onClick={isRegister?handleRegister:handleLogin}
+className="w-full bg-green-500 p-3 rounded">
+{isRegister?"Registrarse":"Iniciar sesión"}
 </button>
 
 <p
-onClick={()=> setIsRegister(!isRegister)}
-className="text-center text-sm text-green-400 mt-4 cursor-pointer"
->
-{isRegister ? "Ya tengo cuenta" : "Crear cuenta"}
+onClick={()=>setIsRegister(!isRegister)}
+className="text-center text-sm text-green-400 mt-4 cursor-pointer">
+{isRegister?"Ya tengo cuenta":"Crear cuenta"}
 </p>
 
 </div>
-
 </div>
-
 )
-
 }
 
 return(
@@ -315,7 +269,7 @@ return(
 
 <main className="flex-1 p-5 pb-24">
 
-{screen === "inicio" && (
+{screen==="inicio"&&(
 
 <div>
 
@@ -350,42 +304,89 @@ return(
 
 </div>
 
-<div className="bg-slate-900 p-5 rounded-xl mt-6">
+</div>
 
-<p className="text-slate-400 mb-3">
-Ventas por día
-</p>
+)}
 
-<div style={{width:"100%",height:250}}>
+{screen==="ventas"&&(
 
-<ResponsiveContainer>
+<div>
 
-<LineChart data={ventasPorDia}>
+<h2 className="text-2xl font-bold mb-6">Ventas</h2>
 
-<XAxis dataKey="fecha"/>
-<YAxis/>
-<Tooltip/>
-
-<Line
-type="monotone"
-dataKey="total"
-stroke="#22c55e"
-strokeWidth={3}
+<input
+placeholder="Producto"
+value={producto}
+onChange={(e)=>setProducto(e.target.value)}
+className="w-full mb-3 p-3 rounded bg-slate-800"
 />
 
-</LineChart>
+<input
+placeholder="Precio"
+value={precio}
+onChange={(e)=>setPrecio(e.target.value)}
+className="w-full mb-3 p-3 rounded bg-slate-800"
+/>
 
-</ResponsiveContainer>
+<button
+onClick={agregarVenta}
+className="bg-green-500 p-3 rounded w-full mb-6">
+Agregar venta
+</button>
 
+{ventas.map((v,i)=>(
+
+<div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
+<span>{v.nombre} - ${v.precio}</span>
+<button onClick={()=>borrarVenta(i)} className="text-red-400">Eliminar</button>
 </div>
 
-</div>
+))}
 
 </div>
 
 )}
 
-{screen === "historial" && (
+{screen==="finanzas"&&(
+
+<div>
+
+<h2 className="text-2xl font-bold mb-6">Gastos</h2>
+
+<input
+placeholder="Nombre del gasto"
+value={gastoNombre}
+onChange={(e)=>setGastoNombre(e.target.value)}
+className="w-full mb-3 p-3 rounded bg-slate-800"
+/>
+
+<input
+placeholder="Monto"
+value={gastoPrecio}
+onChange={(e)=>setGastoPrecio(e.target.value)}
+className="w-full mb-3 p-3 rounded bg-slate-800"
+/>
+
+<button
+onClick={agregarGasto}
+className="bg-red-500 p-3 rounded w-full mb-6">
+Agregar gasto
+</button>
+
+{gastos.map((g,i)=>(
+
+<div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
+<span>{g.nombre} - ${g.precio}</span>
+<button onClick={()=>borrarGasto(i)} className="text-red-400">Eliminar</button>
+</div>
+
+))}
+
+</div>
+
+)}
+
+{screen==="historial"&&(
 
 <div>
 
@@ -400,8 +401,7 @@ className="w-full mb-3 p-3 rounded bg-slate-800"
 
 <button
 onClick={crearHistorial}
-className="bg-blue-500 p-3 rounded w-full mb-6"
->
+className="bg-blue-500 p-3 rounded w-full mb-6">
 Crear historial
 </button>
 
@@ -414,7 +414,7 @@ Crear historial
 <button onClick={()=>setHistorialActivo(i)}>Abrir</button>
 </div>
 
-{historialActivo===i && (
+{historialActivo===i&&(
 
 <div>
 
@@ -434,8 +434,7 @@ className="w-full mb-2 p-2 rounded bg-slate-800"
 
 <button
 onClick={agregarMovimientoHistorial}
-className="bg-green-500 p-2 rounded w-full mb-3"
->
+className="bg-green-500 p-2 rounded w-full mb-3">
 Agregar
 </button>
 
@@ -472,7 +471,6 @@ Agregar
 </nav>
 
 </div>
-
 )
 
-} 
+  }
