@@ -9,8 +9,8 @@ type Screen =
   | "historial"
   | "config";
 
-type Venta = {
-  producto: string;
+type Movimiento = {
+  nombre: string;
   precio: number;
 };
 
@@ -22,9 +22,13 @@ export default function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [ventas, setVentas] = useState<Venta[]>([]);
+  const [ventas, setVentas] = useState<Movimiento[]>([]);
   const [producto, setProducto] = useState("");
   const [precio, setPrecio] = useState("");
+
+  const [gastos, setGastos] = useState<Movimiento[]>([]);
+  const [gastoNombre, setGastoNombre] = useState("");
+  const [gastoPrecio, setGastoPrecio] = useState("");
 
   function handleLogin() {
     if (!email || !password) {
@@ -42,7 +46,7 @@ export default function App() {
     }
 
     const nuevaVenta = {
-      producto,
+      nombre: producto,
       precio: Number(precio)
     };
 
@@ -51,7 +55,25 @@ export default function App() {
     setPrecio("");
   }
 
+  function agregarGasto() {
+    if (!gastoNombre || !gastoPrecio) {
+      alert("Debes llenar gasto y monto");
+      return;
+    }
+
+    const nuevoGasto = {
+      nombre: gastoNombre,
+      precio: Number(gastoPrecio)
+    };
+
+    setGastos([...gastos, nuevoGasto]);
+    setGastoNombre("");
+    setGastoPrecio("");
+  }
+
   const totalVentas = ventas.reduce((acc, v) => acc + v.precio, 0);
+  const totalGastos = gastos.reduce((acc, g) => acc + g.precio, 0);
+  const ganancia = totalVentas - totalGastos;
 
   if (!logged) {
     return (
@@ -111,18 +133,18 @@ export default function App() {
               </div>
 
               <div className="bg-slate-900 p-5 rounded-xl">
-                <p className="text-slate-400 text-sm">Ingresos totales</p>
+                <p className="text-slate-400 text-sm">Ingresos</p>
                 <h3 className="text-xl font-bold">${totalVentas}</h3>
               </div>
 
               <div className="bg-slate-900 p-5 rounded-xl">
                 <p className="text-slate-400 text-sm">Gastos</p>
-                <h3 className="text-xl font-bold">$0</h3>
+                <h3 className="text-xl font-bold">${totalGastos}</h3>
               </div>
 
               <div className="bg-slate-900 p-5 rounded-xl">
-                <p className="text-slate-400 text-sm">Ideas nuevas</p>
-                <h3 className="text-xl font-bold">0</h3>
+                <p className="text-slate-400 text-sm">Ganancia</p>
+                <h3 className="text-xl font-bold text-green-400">${ganancia}</h3>
               </div>
 
             </div>
@@ -165,7 +187,7 @@ export default function App() {
                   key={i}
                   className="bg-slate-900 p-3 rounded mb-2 flex justify-between"
                 >
-                  <span>{v.producto}</span>
+                  <span>{v.nombre}</span>
                   <span>${v.precio}</span>
                 </div>
               ))}
@@ -177,10 +199,46 @@ export default function App() {
 
         {screen === "finanzas" && (
           <div>
-            <h2 className="text-2xl font-bold mb-4">Finanzas</h2>
-            <p className="text-slate-400">
-              Aquí podrás controlar ingresos y gastos.
-            </p>
+
+            <h2 className="text-2xl font-bold mb-4">Registrar gasto</h2>
+
+            <input
+              placeholder="Nombre del gasto"
+              value={gastoNombre}
+              onChange={(e) => setGastoNombre(e.target.value)}
+              className="w-full mb-3 p-3 rounded bg-slate-800"
+            />
+
+            <input
+              placeholder="Monto"
+              value={gastoPrecio}
+              onChange={(e) => setGastoPrecio(e.target.value)}
+              className="w-full mb-3 p-3 rounded bg-slate-800"
+            />
+
+            <button
+              onClick={agregarGasto}
+              className="bg-red-500 hover:bg-red-600 p-3 rounded w-full font-semibold"
+            >
+              Agregar gasto
+            </button>
+
+            <div className="mt-6">
+
+              <h3 className="text-lg font-bold mb-2">Historial de gastos</h3>
+
+              {gastos.map((g, i) => (
+                <div
+                  key={i}
+                  className="bg-slate-900 p-3 rounded mb-2 flex justify-between"
+                >
+                  <span>{g.nombre}</span>
+                  <span>${g.precio}</span>
+                </div>
+              ))}
+
+            </div>
+
           </div>
         )}
 
@@ -202,31 +260,13 @@ export default function App() {
           </div>
         )}
 
-        {screen === "historial" && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Historial</h2>
-            <p className="text-slate-400">
-              Historial de movimientos.
-            </p>
-          </div>
-        )}
-
-        {screen === "config" && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Configuración</h2>
-            <p className="text-slate-400">
-              Ajustes de la aplicación.
-            </p>
-          </div>
-        )}
-
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 text-sm">
 
         <button onClick={() => setScreen("inicio")}>Inicio</button>
         <button onClick={() => setScreen("ventas")}>Ventas</button>
-        <button onClick={() => setScreen("finanzas")}>Finanzas</button>
+        <button onClick={() => setScreen("finanzas")}>Gastos</button>
         <button onClick={() => setScreen("ia")}>IA</button>
         <button onClick={() => setScreen("marketing")}>Marketing</button>
 
