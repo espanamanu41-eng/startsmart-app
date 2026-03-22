@@ -438,7 +438,11 @@ Crear historial
 
 <div className="flex justify-between mb-3">
 <strong>{h.nombre}</strong>
-<button onClick={()=>setHistorialActivo(i)}>Abrir</button>
+
+<button onClick={()=>setHistorialActivo(historialActivo===i ? null : i)}>
+{historialActivo===i ? "Cerrar" : "Abrir"}
+</button>
+
 </div>
 
 {historialActivo===i&&(
