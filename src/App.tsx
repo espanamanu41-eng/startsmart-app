@@ -112,116 +112,6 @@ export default function App() {
     setIsRegister(false);
   }
 
-  function agregarVenta() {
-
-    if (!producto || !precio) {
-      alert("Debes llenar producto y precio");
-      return;
-    }
-
-    const nuevaVenta = {
-      nombre: producto,
-      precio: Number(precio),
-      fecha: new Date().toLocaleDateString(),
-      tipo: "venta"
-    };
-
-    setVentas([...ventas, nuevaVenta]);
-
-    setProducto("");
-    setPrecio("");
-  }
-
-  function agregarGasto() {
-
-    if (!gastoNombre || !gastoPrecio) {
-      alert("Debes llenar gasto y monto");
-      return;
-    }
-
-    const nuevoGasto = {
-      nombre: gastoNombre,
-      precio: Number(gastoPrecio),
-      fecha: new Date().toLocaleDateString(),
-      tipo: "gasto"
-    };
-
-    setGastos([...gastos, nuevoGasto]);
-
-    setGastoNombre("");
-    setGastoPrecio("");
-  }
-
-  function borrarVenta(index:number){
-    if(!confirm("¿Eliminar venta?")) return
-    setVentas(ventas.filter((_,i)=> i !== index))
-  }
-
-  function borrarGasto(index:number){
-    if(!confirm("¿Eliminar gasto?")) return
-    setGastos(gastos.filter((_,i)=> i !== index))
-  }
-
-  function crearHistorial() {
-
-    if (!nuevoHistorial) {
-      alert("Escribe un nombre");
-      return;
-    }
-
-    const nuevo = {
-      nombre: nuevoHistorial,
-      movimientos: []
-    };
-
-    setHistorialesFijos([...historialesFijos, nuevo]);
-    setNuevoHistorial("");
-  }
-
-  function agregarMovimientoHistorial(){
-
-    if(historialActivo === null) return
-
-    if(!movNombre || !movPrecio){
-      alert("Debes escribir nombre y precio")
-      return
-    }
-
-    const nuevo = {
-      nombre: movNombre,
-      precio: Number(movPrecio),
-      fecha: new Date().toLocaleDateString()
-    }
-
-    const copia = [...historialesFijos]
-
-    copia[historialActivo].movimientos.push(nuevo)
-
-    setHistorialesFijos(copia)
-
-    setMovNombre("")
-    setMovPrecio("")
-  }
-
-  function borrarMovimientoHistorial(index:number){
-
-    if(historialActivo === null) return
-
-    if(!confirm("¿Eliminar movimiento?")) return
-
-    const copia = [...historialesFijos]
-
-    copia[historialActivo].movimientos =
-      copia[historialActivo].movimientos.filter((_,i)=> i !== index)
-
-    setHistorialesFijos(copia)
-  }
-
-  const historialGeneral = [
-    ...ventas.map(v => ({ ...v, tipo: "venta" })),
-    ...gastos.map(g => ({ ...g, tipo: "gasto" }))
-  ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-
   const totalVentas = ventas.reduce((acc, v) => acc + v.precio, 0);
   const totalGastos = gastos.reduce((acc, g) => acc + g.precio, 0);
   const ganancia = totalVentas - totalGastos;
@@ -373,6 +263,34 @@ export default function App() {
 
           </div>
 
+        )}
+
+        {screen === "ventas" && (
+          <div>
+            <h2 className="text-2xl font-bold">Ventas</h2>
+            <p className="text-slate-400 mt-3">Aquí aparecerá el registro de ventas.</p>
+          </div>
+        )}
+
+        {screen === "finanzas" && (
+          <div>
+            <h2 className="text-2xl font-bold">Gastos</h2>
+            <p className="text-slate-400 mt-3">Aquí aparecerá el registro de gastos.</p>
+          </div>
+        )}
+
+        {screen === "historial" && (
+          <div>
+            <h2 className="text-2xl font-bold">Historial</h2>
+            <p className="text-slate-400 mt-3">Aquí aparecerá el historial.</p>
+          </div>
+        )}
+
+        {screen === "marketing" && (
+          <div>
+            <h2 className="text-2xl font-bold">Marketing</h2>
+            <p className="text-slate-400 mt-3">Aquí estarán las herramientas de marketing.</p>
+          </div>
         )}
 
       </main>
