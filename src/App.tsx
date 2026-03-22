@@ -125,6 +125,18 @@ export default function App() {
     setGastoPrecio("");
   }
 
+  /* NUEVO: borrar venta */
+  function borrarVenta(index: number) {
+    const nuevasVentas = ventas.filter((_, i) => i !== index);
+    setVentas(nuevasVentas);
+  }
+
+  /* NUEVO: borrar gasto */
+  function borrarGasto(index: number) {
+    const nuevosGastos = gastos.filter((_, i) => i !== index);
+    setGastos(nuevosGastos);
+  }
+
   const totalVentas = ventas.reduce((acc, v) => acc + v.precio, 0);
   const totalGastos = gastos.reduce((acc, g) => acc + g.precio, 0);
   const ganancia = totalVentas - totalGastos;
@@ -222,44 +234,6 @@ export default function App() {
 
             </div>
 
-            {/* GRAFICA */}
-
-            <div className="mt-8">
-
-              <h3 className="text-lg font-bold mb-4">Resumen visual</h3>
-
-              <div className="mb-4">
-                <p className="text-sm text-slate-400 mb-1">Ventas</p>
-                <div className="w-full bg-slate-800 rounded h-4">
-                  <div
-                    className="bg-green-500 h-4 rounded"
-                    style={{ width: "100%" }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-sm text-slate-400 mb-1">Gastos</p>
-                <div className="w-full bg-slate-800 rounded h-4">
-                  <div
-                    className="bg-red-500 h-4 rounded"
-                    style={{ width: `${porcentajeGastos}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-sm text-slate-400 mb-1">Ganancia</p>
-                <div className="w-full bg-slate-800 rounded h-4">
-                  <div
-                    className="bg-blue-500 h-4 rounded"
-                    style={{ width: `${porcentajeGanancia}%` }}
-                  ></div>
-                </div>
-              </div>
-
-            </div>
-
           </div>
 
         )}
@@ -299,10 +273,24 @@ export default function App() {
 
                 <div
                   key={i}
-                  className="bg-slate-900 p-3 rounded mb-2 flex justify-between"
+                  className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center"
                 >
+
                   <span>{v.nombre}</span>
-                  <span>${v.precio}</span>
+
+                  <div className="flex items-center gap-3">
+
+                    <span>${v.precio}</span>
+
+                    <button
+                      onClick={() => borrarVenta(i)}
+                      className="text-red-400 font-bold"
+                    >
+                      ❌
+                    </button>
+
+                  </div>
+
                 </div>
 
               ))}
@@ -348,10 +336,24 @@ export default function App() {
 
                 <div
                   key={i}
-                  className="bg-slate-900 p-3 rounded mb-2 flex justify-between"
+                  className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center"
                 >
+
                   <span>{g.nombre}</span>
-                  <span>${g.precio}</span>
+
+                  <div className="flex items-center gap-3">
+
+                    <span>${g.precio}</span>
+
+                    <button
+                      onClick={() => borrarGasto(i)}
+                      className="text-red-400 font-bold"
+                    >
+                      ❌
+                    </button>
+
+                  </div>
+
                 </div>
 
               ))}
