@@ -21,6 +21,7 @@ export default function App() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
 
   const [ventas, setVentas] = useState<Movimiento[]>(() => {
     const data = localStorage.getItem("ventas");
@@ -47,15 +48,49 @@ export default function App() {
   }, [gastos]);
 
   function handleLogin() {
+
     if (!email || !password) {
       alert("Debes llenar correo y contraseña");
       return;
     }
 
-    setLogged(true);
+    const savedUser = localStorage.getItem("user");
+
+    if (!savedUser) {
+      alert("Usuario no registrado");
+      return;
+    }
+
+    const user = JSON.parse(savedUser);
+
+    if (user.email === email && user.password === password) {
+      setLogged(true);
+    } else {
+      alert("Correo o contraseña incorrectos");
+    }
+  }
+
+  function handleRegister() {
+
+    if (!email || !password) {
+      alert("Debes llenar correo y contraseña");
+      return;
+    }
+
+    const user = {
+      email,
+      password
+    };
+
+    localStorage.setItem("user", JSON.stringify(user));
+
+    alert("Usuario registrado");
+
+    setIsRegister(false);
   }
 
   function agregarVenta() {
+
     if (!producto || !precio) {
       alert("Debes llenar producto y precio");
       return;
@@ -67,11 +102,13 @@ export default function App() {
     };
 
     setVentas([...ventas, nuevaVenta]);
+
     setProducto("");
     setPrecio("");
   }
 
   function agregarGasto() {
+
     if (!gastoNombre || !gastoPrecio) {
       alert("Debes llenar gasto y monto");
       return;
@@ -83,6 +120,7 @@ export default function App() {
     };
 
     setGastos([...gastos, nuevoGasto]);
+
     setGastoNombre("");
     setGastoPrecio("");
   }
@@ -92,8 +130,10 @@ export default function App() {
   const ganancia = totalVentas - totalGastos;
 
   if (!logged) {
+
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
+
         <div className="bg-slate-900 p-8 rounded-2xl w-80">
 
           <h1 className="text-2xl font-bold mb-6 text-center text-green-400">
@@ -116,13 +156,21 @@ export default function App() {
           />
 
           <button
-            onClick={handleLogin}
+            onClick={isRegister ? handleRegister : handleLogin}
             className="w-full bg-green-500 hover:bg-green-600 p-3 rounded font-semibold"
           >
-            Iniciar sesión
+            {isRegister ? "Registrarse" : "Iniciar sesión"}
           </button>
 
+          <p
+            onClick={() => setIsRegister(!isRegister)}
+            className="text-center text-sm text-green-400 mt-4 cursor-pointer"
+          >
+            {isRegister ? "Ya tengo cuenta" : "Crear cuenta"}
+          </p>
+
         </div>
+
       </div>
     );
   }
@@ -137,6 +185,7 @@ export default function App() {
       <main className="flex-1 p-5 pb-24">
 
         {screen === "inicio" && (
+
           <div>
 
             <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
@@ -166,9 +215,11 @@ export default function App() {
             </div>
 
           </div>
+
         )}
 
         {screen === "ventas" && (
+
           <div>
 
             <h2 className="text-2xl font-bold mb-4">Registrar venta</h2>
@@ -199,6 +250,7 @@ export default function App() {
               <h3 className="text-lg font-bold mb-2">Historial</h3>
 
               {ventas.map((v, i) => (
+
                 <div
                   key={i}
                   className="bg-slate-900 p-3 rounded mb-2 flex justify-between"
@@ -206,14 +258,17 @@ export default function App() {
                   <span>{v.nombre}</span>
                   <span>${v.precio}</span>
                 </div>
+
               ))}
 
             </div>
 
           </div>
+
         )}
 
         {screen === "finanzas" && (
+
           <div>
 
             <h2 className="text-2xl font-bold mb-4">Registrar gasto</h2>
@@ -244,6 +299,7 @@ export default function App() {
               <h3 className="text-lg font-bold mb-2">Historial de gastos</h3>
 
               {gastos.map((g, i) => (
+
                 <div
                   key={i}
                   className="bg-slate-900 p-3 rounded mb-2 flex justify-between"
@@ -251,29 +307,13 @@ export default function App() {
                   <span>{g.nombre}</span>
                   <span>${g.precio}</span>
                 </div>
+
               ))}
 
             </div>
 
           </div>
-        )}
 
-        {screen === "ia" && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Asistente IA</h2>
-            <p className="text-slate-400">
-              Próximamente asistente inteligente para negocios.
-            </p>
-          </div>
-        )}
-
-        {screen === "marketing" && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Marketing</h2>
-            <p className="text-slate-400">
-              Herramientas de marketing.
-            </p>
-          </div>
         )}
 
       </main>
