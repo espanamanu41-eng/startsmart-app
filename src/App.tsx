@@ -101,7 +101,7 @@ setIsRegister(false)
 
 }
 
-function agregarVenta(){
+  async function agregarVenta(){
 
 if(!producto||!precio){
 alert("Debes llenar producto y precio")
@@ -116,9 +116,14 @@ tipo:"venta"
 }
 
 setVentas([...ventas,nuevaVenta])
+
+// guardar en Firebase
+await addDoc(collection(db,"ventas"),nuevaVenta)
+
 setProducto("")
 setPrecio("")
 }
+
 
 function agregarGasto(){
 
