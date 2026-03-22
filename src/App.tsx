@@ -13,6 +13,12 @@ type Movimiento = {
   nombre: string;
   precio: number;
   fecha: string;
+  tipo?: "venta" | "gasto";
+};
+
+type HistorialFijo = {
+  nombre: string;
+  movimientos: Movimiento[];
 };
 
 export default function App() {
@@ -40,6 +46,13 @@ export default function App() {
   const [gastoNombre, setGastoNombre] = useState("");
   const [gastoPrecio, setGastoPrecio] = useState("");
 
+  const [historialesFijos, setHistorialesFijos] = useState<HistorialFijo[]>(() => {
+    const data = localStorage.getItem("historialesFijos");
+    return data ? JSON.parse(data) : [];
+  });
+
+  const [nuevoHistorial, setNuevoHistorial] = useState("");
+
   useEffect(() => {
     localStorage.setItem("ventas", JSON.stringify(ventas));
   }, [ventas]);
@@ -47,6 +60,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("gastos", JSON.stringify(gastos));
   }, [gastos]);
+
+  useEffect(() => {
+    localStorage.setItem("historialesFijos", JSON.stringify(historialesFijos));
+  }, [historialesFijos]);
 
   function handleLogin() {
 
@@ -78,10 +95,7 @@ export default function App() {
       return;
     }
 
-    const user = {
-      email,
-      password
-    };
+    const user = { email, password };
 
     localStorage.setItem("user", JSON.stringify(user));
 
@@ -100,7 +114,8 @@ export default function App() {
     const nuevaVenta = {
       nombre: producto,
       precio: Number(precio),
-      fecha: new Date().toLocaleDateString()
+      fecha: new Date().toLocaleDateString(),
+      tipo: "venta"
     };
 
     setVentas([...ventas, nuevaVenta]);
@@ -119,7 +134,8 @@ export default function App() {
     const nuevoGasto = {
       nombre: gastoNombre,
       precio: Number(gastoPrecio),
-      fecha: new Date().toLocaleDateString()
+      fecha: new Date().toLocaleDateString(),
+      tipo: "gasto"
     };
 
     setGastos([...gastos, nuevoGasto]);
@@ -131,36 +147,43 @@ export default function App() {
   function borrarVenta(index: number) {
 
     const confirmar = confirm("¿Eliminar esta venta?");
-
     if (!confirmar) return;
 
-    const nuevasVentas = ventas.filter((_, i) => i !== index);
-
-    setVentas(nuevasVentas);
+    setVentas(ventas.filter((_, i) => i !== index));
   }
 
   function borrarGasto(index: number) {
 
     const confirmar = confirm("¿Eliminar este gasto?");
-
     if (!confirmar) return;
 
-    const nuevosGastos = gastos.filter((_, i) => i !== index);
-
-    setGastos(nuevosGastos);
+    setGastos(gastos.filter((_, i) => i !== index));
   }
+
+  function crearHistorial() {
+
+    if (!nuevoHistorial) {
+      alert("Escribe un nombre");
+      return;
+    }
+
+    const nuevo = {
+      nombre: nuevoHistorial,
+      movimientos: []
+    };
+
+    setHistorialesFijos([...historialesFijos, nuevo]);
+    setNuevoHistorial("");
+  }
+
+  const historialGeneral = [
+    ...ventas.map(v => ({ ...v, tipo: "venta" })),
+    ...gastos.map(g => ({ ...g, tipo: "gasto" }))
+  ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
   const totalVentas = ventas.reduce((acc, v) => acc + v.precio, 0);
   const totalGastos = gastos.reduce((acc, g) => acc + g.precio, 0);
   const ganancia = totalVentas - totalGastos;
-
-  const porcentajeGastos = totalVentas
-    ? (totalGastos / totalVentas) * 100
-    : 0;
-
-  const porcentajeGanancia = totalVentas
-    ? (ganancia / totalVentas) * 100
-    : 0;
 
   const hoy = new Date().toLocaleDateString();
 
@@ -224,9 +247,7 @@ export default function App() {
       <main className="flex-1 p-5 pb-24">
 
         {screen === "inicio" && (
-
           <div>
-
             <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
 
             <div className="grid grid-cols-2 gap-4">
@@ -259,136 +280,74 @@ export default function App() {
             </div>
 
           </div>
-
         )}
 
-        {screen === "ventas" && (
+        {screen === "historial" && (
 
           <div>
 
-            <h2 className="text-2xl font-bold mb-4">Registrar venta</h2>
+            <h2 className="text-2xl font-bold mb-4">Historial</h2>
+
+            <h3 className="text-lg font-bold mb-2">📌 Historial fijo</h3>
 
             <input
-              placeholder="Producto"
-              value={producto}
-              onChange={(e) => setProducto(e.target.value)}
-              className="w-full mb-3 p-3 rounded bg-slate-800"
-            />
-
-            <input
-              placeholder="Precio"
-              value={precio}
-              onChange={(e) => setPrecio(e.target.value)}
-              className="w-full mb-3 p-3 rounded bg-slate-800"
+              placeholder="Nombre del historial"
+              value={nuevoHistorial}
+              onChange={(e) => setNuevoHistorial(e.target.value)}
+              className="w-full mb-2 p-3 rounded bg-slate-800"
             />
 
             <button
-              onClick={agregarVenta}
-              className="bg-green-500 hover:bg-green-600 p-3 rounded w-full font-semibold"
+              onClick={crearHistorial}
+              className="bg-green-500 p-3 rounded w-full mb-4"
             >
-              Agregar venta
+              Crear historial
             </button>
 
-            <div className="mt-6">
+            {historialesFijos.map((h, i) => (
 
-              <h3 className="text-lg font-bold mb-2">Historial</h3>
+              <div
+                key={i}
+                className="bg-slate-900 p-3 rounded mb-2"
+              >
+                {h.nombre}
+              </div>
 
-              {ventas.map((v, i) => (
+            ))}
 
-                <div
-                  key={i}
-                  className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center"
-                >
+            <hr className="my-6 border-slate-800" />
 
-                  <div>
-                    <span>{v.nombre}</span>
-                    <p className="text-xs text-slate-400">{v.fecha}</p>
-                  </div>
+            <h3 className="text-lg font-bold mb-2">📊 Historial general</h3>
 
-                  <div className="flex items-center gap-3">
+            {historialGeneral.map((m, i) => (
 
-                    <span>${v.precio}</span>
+              <div
+                key={i}
+                className="bg-slate-900 p-3 rounded mb-2 flex justify-between"
+              >
 
-                    <button
-                      onClick={() => borrarVenta(i)}
-                      className="text-red-400 font-bold"
-                    >
-                      ❌
-                    </button>
+                <div>
+                  <span>
+                    {m.tipo === "venta" ? "Venta - " : "Gasto - "}
+                    {m.nombre}
+                  </span>
 
-                  </div>
-
+                  <p className="text-xs text-slate-400">{m.fecha}</p>
                 </div>
 
-              ))}
-
-            </div>
-
-          </div>
-
-        )}
-
-        {screen === "finanzas" && (
-
-          <div>
-
-            <h2 className="text-2xl font-bold mb-4">Registrar gasto</h2>
-
-            <input
-              placeholder="Nombre del gasto"
-              value={gastoNombre}
-              onChange={(e) => setGastoNombre(e.target.value)}
-              className="w-full mb-3 p-3 rounded bg-slate-800"
-            />
-
-            <input
-              placeholder="Monto"
-              value={gastoPrecio}
-              onChange={(e) => setGastoPrecio(e.target.value)}
-              className="w-full mb-3 p-3 rounded bg-slate-800"
-            />
-
-            <button
-              onClick={agregarGasto}
-              className="bg-red-500 hover:bg-red-600 p-3 rounded w-full font-semibold"
-            >
-              Agregar gasto
-            </button>
-
-            <div className="mt-6">
-
-              <h3 className="text-lg font-bold mb-2">Historial de gastos</h3>
-
-              {gastos.map((g, i) => (
-
-                <div
-                  key={i}
-                  className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center"
+                <span
+                  className={
+                    m.tipo === "venta"
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }
                 >
+                  {m.tipo === "venta" ? "+" : "-"}${m.precio}
+                </span>
 
-                  <div>
-                    <span>{g.nombre}</span>
-                    <p className="text-xs text-slate-400">{g.fecha}</p>
-                  </div>
+              </div>
 
-                  <div className="flex items-center gap-3">
-
-                    <span>${g.precio}</span>
-
-                    <button
-                      onClick={() => borrarGasto(i)}
-                      className="text-red-400 font-bold"
-                    >
-                      ❌
-                    </button>
-
-                  </div>
-
-                </div>
-
-              ))}
-
-            </div>
+            ))}
 
           </div>
 
@@ -401,11 +360,11 @@ export default function App() {
         <button onClick={() => setScreen("inicio")}>Inicio</button>
         <button onClick={() => setScreen("ventas")}>Ventas</button>
         <button onClick={() => setScreen("finanzas")}>Gastos</button>
-        <button onClick={() => setScreen("ia")}>IA</button>
+        <button onClick={() => setScreen("historial")}>Historial</button>
         <button onClick={() => setScreen("marketing")}>Marketing</button>
 
       </nav>
 
     </div>
   );
-}
+        }
