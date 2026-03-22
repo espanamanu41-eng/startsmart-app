@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type Screen =
   | "inicio"
@@ -22,13 +22,29 @@ export default function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [ventas, setVentas] = useState<Movimiento[]>([]);
+  const [ventas, setVentas] = useState<Movimiento[]>(() => {
+    const data = localStorage.getItem("ventas");
+    return data ? JSON.parse(data) : [];
+  });
+
   const [producto, setProducto] = useState("");
   const [precio, setPrecio] = useState("");
 
-  const [gastos, setGastos] = useState<Movimiento[]>([]);
+  const [gastos, setGastos] = useState<Movimiento[]>(() => {
+    const data = localStorage.getItem("gastos");
+    return data ? JSON.parse(data) : [];
+  });
+
   const [gastoNombre, setGastoNombre] = useState("");
   const [gastoPrecio, setGastoPrecio] = useState("");
+
+  useEffect(() => {
+    localStorage.setItem("ventas", JSON.stringify(ventas));
+  }, [ventas]);
+
+  useEffect(() => {
+    localStorage.setItem("gastos", JSON.stringify(gastos));
+  }, [gastos]);
 
   function handleLogin() {
     if (!email || !password) {
