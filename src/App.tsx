@@ -304,6 +304,37 @@ return(
 
 </div>
 
+<div className="bg-slate-900 p-5 rounded-xl mt-6">
+
+<p className="text-slate-400 mb-3">
+Ventas por día
+</p>
+
+<div style={{width:"100%",height:250}}>
+
+<ResponsiveContainer>
+
+<LineChart data={ventasPorDia}>
+
+<XAxis dataKey="fecha"/>
+<YAxis/>
+<Tooltip/>
+
+<Line
+type="monotone"
+dataKey="total"
+stroke="#22c55e"
+strokeWidth={3}
+/>
+
+</LineChart>
+
+</ResponsiveContainer>
+
+</div>
+
+</div>
+
 </div>
 
 )}
@@ -390,7 +421,22 @@ Agregar gasto
 
 <div>
 
-<h2 className="text-2xl font-bold mb-6">Historial fijo</h2>
+<h2 className="text-2xl font-bold mb-6">Historial</h2>
+
+{historialGeneral.map((m,i)=>(
+
+<div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
+<span>{m.nombre} - ${m.precio}</span>
+<span className={m.tipo==="venta"?"text-green-400":"text-red-400"}>
+{m.tipo}
+</span>
+</div>
+
+))}
+
+<hr className="my-6 border-slate-700"/>
+
+<h3 className="text-lg mb-3 text-blue-400">Historiales personalizados</h3>
 
 <input
 placeholder="Nombre del historial"
@@ -471,6 +517,7 @@ Agregar
 </nav>
 
 </div>
+
 )
 
-  }
+}
