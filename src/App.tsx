@@ -419,22 +419,9 @@ Agregar gasto
 
 <div>
 
-<h2 className="text-2xl font-bold mb-6">Historial general</h2>
-
-{historialGeneral.map((m,i)=>(
-
-<div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
-<span>{m.nombre} - ${m.precio}</span>
-<span className={m.tipo==="venta"?"text-green-400":"text-red-400"}>
-{m.tipo}
-</span>
-</div>
-
-))}
-
-<hr className="my-6 border-slate-700"/>
-
-<h3 className="text-lg mb-3 text-blue-400">Historiales personalizados</h3>
+<h2 className="text-2xl font-bold mb-6 text-blue-400">
+Historiales personalizados
+</h2>
 
 <input placeholder="Nombre del historial"
 value={nuevoHistorial}
@@ -490,6 +477,23 @@ Agregar
 
 ))}
 
+<hr className="my-6 border-slate-700"/>
+
+<h2 className="text-2xl font-bold mb-6">
+Historial general
+</h2>
+
+{historialGeneral.map((m,i)=>(
+
+<div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
+<span>{m.nombre} - ${m.precio}</span>
+<span className={m.tipo==="venta"?"text-green-400":"text-red-400"}>
+{m.tipo}
+</span>
+</div>
+
+))}
+
 </div>
 
 )}
@@ -509,4 +513,4 @@ Agregar
 
 )
 
-}
+  }
