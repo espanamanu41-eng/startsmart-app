@@ -205,22 +205,6 @@ const ventasHoy=ventas
 .filter(v=>v.fecha===hoy)
 .reduce((acc,v)=>acc+v.precio,0)
 
-const ventasPorDia=ventas.reduce((acc:any,venta)=>{
-
-const existe=acc.find((d:any)=>d.fecha===venta.fecha)
-
-if(existe){
-existe.total+=venta.precio
-}else{
-acc.push({fecha:venta.fecha,total:venta.precio})
-}
-
-return acc
-
-},[])
-
-/* NUEVO: ventas y gastos combinados por día */
-
 const finanzasPorDia = historialGeneral.reduce((acc:any,mov)=>{
 
 const existe = acc.find((d:any)=>d.fecha === mov.fecha)
@@ -348,19 +332,8 @@ Ventas vs Gastos por día
 <YAxis/>
 <Tooltip/>
 
-<Line
-type="monotone"
-dataKey="ventas"
-stroke="#22c55e"
-strokeWidth={3}
-/>
-
-<Line
-type="monotone"
-dataKey="gastos"
-stroke="#ef4444"
-strokeWidth={3}
-/>
+<Line type="monotone" dataKey="ventas" stroke="#22c55e" strokeWidth={3}/>
+<Line type="monotone" dataKey="gastos" stroke="#ef4444" strokeWidth={3}/>
 
 </LineChart>
 
@@ -374,7 +347,63 @@ strokeWidth={3}
 
 )}
 
-{/* TODO lo demás queda igual */}
+{/* ventas */}
+
+{screen==="ventas"&&(
+
+<div>
+
+<h2 className="text-2xl font-bold mb-6">Ventas</h2>
+
+<input placeholder="Producto" value={producto} onChange={(e)=>setProducto(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800"/>
+
+<input placeholder="Precio" value={precio} onChange={(e)=>setPrecio(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800"/>
+
+<button onClick={agregarVenta} className="bg-green-500 p-3 rounded w-full mb-6">
+Agregar venta
+</button>
+
+{ventas.map((v,i)=>(
+
+<div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
+<span>{v.nombre} - ${v.precio}</span>
+<button onClick={()=>borrarVenta(i)} className="text-red-400">Eliminar</button>
+</div>
+
+))}
+
+</div>
+
+)}
+
+{/* gastos */}
+
+{screen==="finanzas"&&(
+
+<div>
+
+<h2 className="text-2xl font-bold mb-6">Gastos</h2>
+
+<input placeholder="Nombre del gasto" value={gastoNombre} onChange={(e)=>setGastoNombre(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800"/>
+
+<input placeholder="Monto" value={gastoPrecio} onChange={(e)=>setGastoPrecio(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800"/>
+
+<button onClick={agregarGasto} className="bg-red-500 p-3 rounded w-full mb-6">
+Agregar gasto
+</button>
+
+{gastos.map((g,i)=>(
+
+<div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
+<span>{g.nombre} - ${g.precio}</span>
+<button onClick={()=>borrarGasto(i)} className="text-red-400">Eliminar</button>
+</div>
+
+))}
+
+</div>
+
+)}
 
 </main>
 
@@ -391,4 +420,4 @@ strokeWidth={3}
 
 )
 
-  }
+}
