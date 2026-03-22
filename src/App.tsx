@@ -10,6 +10,11 @@ type Movimiento = {
   tipo?: "venta" | "gasto";
 };
 
+type HistorialFijo = {
+  nombre: string;
+  movimientos: Movimiento[];
+};
+
 export default function App() {
 
 const [logged, setLogged] = useState(false);
@@ -29,6 +34,16 @@ const data = localStorage.getItem("gastos");
 return data ? JSON.parse(data) : [];
 });
 
+const [historialesFijos, setHistorialesFijos] = useState<HistorialFijo[]>(() => {
+const data = localStorage.getItem("historialesFijos");
+return data ? JSON.parse(data) : [];
+});
+
+const [nuevoHistorial,setNuevoHistorial] = useState("");
+const [historialActivo,setHistorialActivo] = useState<number | null>(null);
+const [movNombre,setMovNombre] = useState("");
+const [movPrecio,setMovPrecio] = useState("");
+
 const [producto, setProducto] = useState("");
 const [precio, setPrecio] = useState("");
 
@@ -42,6 +57,10 @@ localStorage.setItem("ventas",JSON.stringify(ventas))
 useEffect(()=>{
 localStorage.setItem("gastos",JSON.stringify(gastos))
 },[gastos])
+
+useEffect(()=>{
+localStorage.setItem("historialesFijos",JSON.stringify(historialesFijos))
+},[historialesFijos])
 
 function handleLogin(){
 
@@ -129,6 +148,54 @@ setVentas(ventas.filter((_,i)=> i !== index))
 function borrarGasto(index:number){
 if(!confirm("¿Eliminar gasto?")) return
 setGastos(gastos.filter((_,i)=> i !== index))
+}
+
+function crearHistorial(){
+if(!nuevoHistorial){
+alert("Escribe nombre")
+return
+}
+
+setHistorialesFijos([...historialesFijos,{
+nombre:nuevoHistorial,
+movimientos:[]
+}])
+
+setNuevoHistorial("")
+}
+
+function agregarMovimientoHistorial(){
+
+if(historialActivo === null) return
+
+if(!movNombre || !movPrecio){
+alert("Debes escribir nombre y precio")
+return
+}
+
+const copia=[...historialesFijos]
+
+copia[historialActivo].movimientos.push({
+nombre:movNombre,
+precio:Number(movPrecio),
+fecha:new Date().toLocaleDateString()
+})
+
+setHistorialesFijos(copia)
+setMovNombre("")
+setMovPrecio("")
+}
+
+function borrarMovimientoHistorial(index:number){
+
+if(historialActivo === null) return
+
+const copia=[...historialesFijos]
+
+copia[historialActivo].movimientos =
+copia[historialActivo].movimientos.filter((_,i)=> i!==index)
+
+setHistorialesFijos(copia)
 }
 
 const historialGeneral = [
@@ -314,109 +381,6 @@ strokeWidth={3}
 
 </div>
 
-<div className="bg-slate-900 p-5 rounded-xl mt-6">
-
-<p className="text-slate-400 mb-3">
-Ventas vs Gastos
-</p>
-
-<div style={{width:"100%",height:250}}>
-
-<ResponsiveContainer>
-
-<LineChart data={finanzasPorDia}>
-
-<XAxis dataKey="fecha"/>
-<YAxis/>
-<Tooltip/>
-
-<Line type="monotone" dataKey="ventas" stroke="#22c55e" strokeWidth={3}/>
-<Line type="monotone" dataKey="gastos" stroke="#ef4444" strokeWidth={3}/>
-
-</LineChart>
-
-</ResponsiveContainer>
-
-</div>
-
-</div>
-
-</div>
-
-)}
-
-{screen === "ventas" && (
-
-<div>
-
-<h2 className="text-2xl font-bold mb-6">Ventas</h2>
-
-<input
-placeholder="Producto"
-value={producto}
-onChange={(e)=>setProducto(e.target.value)}
-className="w-full mb-3 p-3 rounded bg-slate-800"
-/>
-
-<input
-placeholder="Precio"
-value={precio}
-onChange={(e)=>setPrecio(e.target.value)}
-className="w-full mb-3 p-3 rounded bg-slate-800"
-/>
-
-<button
-onClick={agregarVenta}
-className="bg-green-500 p-3 rounded w-full mb-6"
->
-Agregar venta
-</button>
-
-{ventas.map((v,i)=>(
-<div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
-<span>{v.nombre} - ${v.precio}</span>
-<button onClick={()=>borrarVenta(i)} className="text-red-400">Eliminar</button>
-</div>
-))}
-
-</div>
-
-)}
-
-{screen === "finanzas" && (
-
-<div>
-
-<h2 className="text-2xl font-bold mb-6">Gastos</h2>
-
-<input
-placeholder="Nombre del gasto"
-value={gastoNombre}
-onChange={(e)=>setGastoNombre(e.target.value)}
-className="w-full mb-3 p-3 rounded bg-slate-800"
-/>
-
-<input
-placeholder="Monto"
-value={gastoPrecio}
-onChange={(e)=>setGastoPrecio(e.target.value)}
-className="w-full mb-3 p-3 rounded bg-slate-800"
-/>
-
-<button
-onClick={agregarGasto}
-className="bg-red-500 p-3 rounded w-full mb-6"
->
-Agregar gasto
-</button>
-
-{gastos.map((g,i)=>(
-<div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
-<span>{g.nombre} - ${g.precio}</span>
-<button onClick={()=>borrarGasto(i)} className="text-red-400">Eliminar</button>
-</div>
-))}
-
 </div>
 
 )}
@@ -425,15 +389,71 @@ Agregar gasto
 
 <div>
 
-<h2 className="text-2xl font-bold mb-6">Historial</h2>
+<h2 className="text-2xl font-bold mb-6">Historial fijo</h2>
 
-{historialGeneral.map((m,i)=>(
-<div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
-<span>{m.nombre} - ${m.precio}</span>
-<span className={m.tipo === "venta" ? "text-green-400":"text-red-400"}>
-{m.tipo}
-</span>
+<input
+placeholder="Nombre del historial"
+value={nuevoHistorial}
+onChange={(e)=>setNuevoHistorial(e.target.value)}
+className="w-full mb-3 p-3 rounded bg-slate-800"
+/>
+
+<button
+onClick={crearHistorial}
+className="bg-blue-500 p-3 rounded w-full mb-6"
+>
+Crear historial
+</button>
+
+{historialesFijos.map((h,i)=>(
+
+<div key={i} className="bg-slate-900 p-4 rounded mb-3">
+
+<div className="flex justify-between mb-3">
+<strong>{h.nombre}</strong>
+<button onClick={()=>setHistorialActivo(i)}>Abrir</button>
 </div>
+
+{historialActivo===i && (
+
+<div>
+
+<input
+placeholder="Movimiento"
+value={movNombre}
+onChange={(e)=>setMovNombre(e.target.value)}
+className="w-full mb-2 p-2 rounded bg-slate-800"
+/>
+
+<input
+placeholder="Monto"
+value={movPrecio}
+onChange={(e)=>setMovPrecio(e.target.value)}
+className="w-full mb-2 p-2 rounded bg-slate-800"
+/>
+
+<button
+onClick={agregarMovimientoHistorial}
+className="bg-green-500 p-2 rounded w-full mb-3"
+>
+Agregar
+</button>
+
+{h.movimientos.map((m,j)=>(
+
+<div key={j} className="flex justify-between text-sm mb-1">
+<span>{m.nombre} ${m.precio}</span>
+<button onClick={()=>borrarMovimientoHistorial(j)}>❌</button>
+</div>
+
+))}
+
+</div>
+
+)}
+
+</div>
+
 ))}
 
 </div>
@@ -455,4 +475,4 @@ Agregar gasto
 
 )
 
-}
+} 
