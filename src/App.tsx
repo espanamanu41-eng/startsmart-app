@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
 
+import {
+LineChart,
+Line,
+XAxis,
+YAxis,
+Tooltip,
+ResponsiveContainer
+} from "recharts";
+
 type Screen =
   | "inicio"
   | "ventas"
@@ -143,14 +152,14 @@ export default function App() {
     setGastoPrecio("");
   }
 
-  function borrarVenta(index: number) {
-    if (!confirm("¿Eliminar esta venta?")) return;
-    setVentas(ventas.filter((_, i) => i !== index));
+  function borrarVenta(index:number){
+    if(!confirm("¿Eliminar venta?")) return
+    setVentas(ventas.filter((_,i)=> i !== index))
   }
 
-  function borrarGasto(index: number) {
-    if (!confirm("¿Eliminar este gasto?")) return;
-    setGastos(gastos.filter((_, i) => i !== index));
+  function borrarGasto(index:number){
+    if(!confirm("¿Eliminar gasto?")) return
+    setGastos(gastos.filter((_,i)=> i !== index))
   }
 
   function crearHistorial() {
@@ -169,43 +178,43 @@ export default function App() {
     setNuevoHistorial("");
   }
 
-  function agregarMovimientoHistorial() {
+  function agregarMovimientoHistorial(){
 
-    if (historialActivo === null) return;
+    if(historialActivo === null) return
 
-    if (!movNombre || !movPrecio) {
-      alert("Debes escribir nombre y precio");
-      return;
+    if(!movNombre || !movPrecio){
+      alert("Debes escribir nombre y precio")
+      return
     }
 
     const nuevo = {
       nombre: movNombre,
       precio: Number(movPrecio),
       fecha: new Date().toLocaleDateString()
-    };
+    }
 
-    const copia = [...historialesFijos];
+    const copia = [...historialesFijos]
 
-    copia[historialActivo].movimientos.push(nuevo);
+    copia[historialActivo].movimientos.push(nuevo)
 
-    setHistorialesFijos(copia);
+    setHistorialesFijos(copia)
 
-    setMovNombre("");
-    setMovPrecio("");
+    setMovNombre("")
+    setMovPrecio("")
   }
 
   function borrarMovimientoHistorial(index:number){
 
-    if(historialActivo === null) return;
+    if(historialActivo === null) return
 
-    if(!confirm("¿Eliminar movimiento?")) return;
+    if(!confirm("¿Eliminar movimiento?")) return
 
-    const copia = [...historialesFijos];
+    const copia = [...historialesFijos]
 
     copia[historialActivo].movimientos =
-      copia[historialActivo].movimientos.filter((_,i)=> i !== index);
+      copia[historialActivo].movimientos.filter((_,i)=> i !== index)
 
-    setHistorialesFijos(copia);
+    setHistorialesFijos(copia)
   }
 
   const historialGeneral = [
@@ -222,6 +231,23 @@ export default function App() {
   const ventasHoy = ventas
     .filter(v => v.fecha === hoy)
     .reduce((acc, v) => acc + v.precio, 0);
+
+  const ventasPorDia = ventas.reduce((acc:any, venta) => {
+
+    const existe = acc.find((d:any) => d.fecha === venta.fecha);
+
+    if (existe) {
+      existe.total += venta.precio;
+    } else {
+      acc.push({
+        fecha: venta.fecha,
+        total: venta.precio
+      });
+    }
+
+    return acc;
+
+  }, []);
 
   if (!logged) {
 
@@ -314,264 +340,38 @@ export default function App() {
 
             </div>
 
-          </div>
+            <div className="bg-slate-900 p-5 rounded-xl mt-6">
 
-        )}
+              <p className="text-slate-400 mb-3">
+                Ventas por día
+              </p>
 
-        {screen === "ventas" && (
+              <div style={{ width: "100%", height: 250 }}>
 
-          <div>
+                <ResponsiveContainer>
 
-            <h2 className="text-2xl font-bold mb-4">Registrar venta</h2>
+                  <LineChart data={ventasPorDia}>
 
-            <input
-              placeholder="Producto"
-              value={producto}
-              onChange={(e) => setProducto(e.target.value)}
-              className="w-full mb-3 p-3 rounded bg-slate-800"
-            />
+                    <XAxis dataKey="fecha" />
 
-            <input
-              placeholder="Precio"
-              value={precio}
-              onChange={(e) => setPrecio(e.target.value)}
-              className="w-full mb-3 p-3 rounded bg-slate-800"
-            />
+                    <YAxis />
 
-            <button
-              onClick={agregarVenta}
-              className="bg-green-500 p-3 rounded w-full mb-4"
-            >
-              Agregar venta
-            </button>
+                    <Tooltip />
 
-            {ventas.map((v,i)=>(
+                    <Line
+                      type="monotone"
+                      dataKey="total"
+                      stroke="#22c55e"
+                      strokeWidth={3}
+                    />
 
-              <div
-                key={i}
-                className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center"
-              >
+                  </LineChart>
 
-                <div>
-                  <span>{v.nombre}</span>
-                  <p className="text-xs text-slate-400">{v.fecha}</p>
-                </div>
-
-                <div className="flex gap-3 items-center">
-
-                  <span className="text-green-400">
-                    ${v.precio}
-                  </span>
-
-                  <button
-                    onClick={()=> borrarVenta(i)}
-                    className="text-red-400"
-                  >
-                    ❌
-                  </button>
-
-                </div>
+                </ResponsiveContainer>
 
               </div>
 
-            ))}
-
-          </div>
-
-        )}
-
-        {screen === "finanzas" && (
-
-          <div>
-
-            <h2 className="text-2xl font-bold mb-4">Registrar gasto</h2>
-
-            <input
-              placeholder="Nombre del gasto"
-              value={gastoNombre}
-              onChange={(e) => setGastoNombre(e.target.value)}
-              className="w-full mb-3 p-3 rounded bg-slate-800"
-            />
-
-            <input
-              placeholder="Monto"
-              value={gastoPrecio}
-              onChange={(e) => setGastoPrecio(e.target.value)}
-              className="w-full mb-3 p-3 rounded bg-slate-800"
-            />
-
-            <button
-              onClick={agregarGasto}
-              className="bg-red-500 p-3 rounded w-full mb-4"
-            >
-              Agregar gasto
-            </button>
-
-            {gastos.map((g,i)=>(
-
-              <div
-                key={i}
-                className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center"
-              >
-
-                <div>
-                  <span>{g.nombre}</span>
-                  <p className="text-xs text-slate-400">{g.fecha}</p>
-                </div>
-
-                <div className="flex gap-3 items-center">
-
-                  <span className="text-red-400">
-                    ${g.precio}
-                  </span>
-
-                  <button
-                    onClick={()=> borrarGasto(i)}
-                    className="text-red-400"
-                  >
-                    ❌
-                  </button>
-
-                </div>
-
-              </div>
-
-            ))}
-
-          </div>
-
-        )}
-
-        {screen === "historial" && (
-
-          <div>
-
-            <h2 className="text-2xl font-bold mb-4">Historial</h2>
-
-            {historialActivo === null && (
-
-              <div>
-
-                <input
-                  placeholder="Nombre del historial"
-                  value={nuevoHistorial}
-                  onChange={(e) => setNuevoHistorial(e.target.value)}
-                  className="w-full mb-3 p-3 rounded bg-slate-800"
-                />
-
-                <button
-                  onClick={crearHistorial}
-                  className="bg-green-500 p-3 rounded w-full mb-4"
-                >
-                  Crear historial
-                </button>
-
-                {historialesFijos.map((h,i)=>(
-
-                  <div
-                    key={i}
-                    onClick={()=> setHistorialActivo(i)}
-                    className="bg-slate-900 p-3 rounded mb-2 cursor-pointer"
-                  >
-                    📁 {h.nombre}
-                  </div>
-
-                ))}
-
-                {historialGeneral.map((m, i) => (
-
-                  <div
-                    key={i}
-                    className="bg-slate-900 p-3 rounded mb-2 flex justify-between"
-                  >
-
-                    <div>
-                      <span>{m.tipo === "venta" ? "Venta - " : "Gasto - "}{m.nombre}</span>
-                      <p className="text-xs text-slate-400">{m.fecha}</p>
-                    </div>
-
-                    <span className={m.tipo === "venta" ? "text-green-400" : "text-red-400"}>
-                      {m.tipo === "venta" ? "+" : "-"}${m.precio}
-                    </span>
-
-                  </div>
-
-                ))}
-
-              </div>
-
-            )}
-
-            {historialActivo !== null && (
-
-              <div>
-
-                <button
-                  onClick={()=> setHistorialActivo(null)}
-                  className="text-green-400 mb-4"
-                >
-                  ⬅ Volver
-                </button>
-
-                <h3 className="text-xl font-bold mb-4">
-                  {historialesFijos[historialActivo].nombre}
-                </h3>
-
-                <input
-                  placeholder="Nombre"
-                  value={movNombre}
-                  onChange={(e)=> setMovNombre(e.target.value)}
-                  className="w-full mb-3 p-3 rounded bg-slate-800"
-                />
-
-                <input
-                  placeholder="Precio"
-                  value={movPrecio}
-                  onChange={(e)=> setMovPrecio(e.target.value)}
-                  className="w-full mb-3 p-3 rounded bg-slate-800"
-                />
-
-                <button
-                  onClick={agregarMovimientoHistorial}
-                  className="bg-green-500 p-3 rounded w-full mb-4"
-                >
-                  Agregar
-                </button>
-
-                {historialesFijos[historialActivo].movimientos.map((m,i)=>(
-
-                  <div
-                    key={i}
-                    className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center"
-                  >
-
-                    <div>
-                      <span>{m.nombre}</span>
-                      <p className="text-xs text-slate-400">{m.fecha}</p>
-                    </div>
-
-                    <div className="flex gap-3 items-center">
-
-                      <span className="text-green-400">
-                        ${m.precio}
-                      </span>
-
-                      <button
-                        onClick={()=> borrarMovimientoHistorial(i)}
-                        className="text-red-400"
-                      >
-                        ❌
-                      </button>
-
-                    </div>
-
-                  </div>
-
-                ))}
-
-              </div>
-
-            )}
+            </div>
 
           </div>
 
@@ -593,4 +393,4 @@ export default function App() {
 
   );
 
-}
+          }
