@@ -138,11 +138,15 @@ setGastoPrecio("")
 }
 
 function borrarVenta(i:number){
+if(confirm("¿Eliminar esta venta?")){
 setVentas(ventas.filter((_,index)=>index!==i))
+}
 }
 
 function borrarGasto(i:number){
+if(confirm("¿Eliminar este gasto?")){
 setGastos(gastos.filter((_,index)=>index!==i))
+}
 }
 
 function crearHistorial(){
@@ -164,6 +168,11 @@ function agregarMovimientoHistorial(){
 
 if(historialActivo===null) return
 
+if(!movNombre||!movPrecio){
+alert("Completa los datos")
+return
+}
+
 const copia=[...historialesFijos]
 
 copia[historialActivo].movimientos.push({
@@ -182,12 +191,17 @@ function borrarMovimientoHistorial(index:number){
 
 if(historialActivo===null) return
 
+if(confirm("¿Eliminar movimiento?")){
+
 const copia=[...historialesFijos]
 
 copia[historialActivo].movimientos=
 copia[historialActivo].movimientos.filter((_,i)=>i!==index)
 
 setHistorialesFijos(copia)
+
+}
+
 }
 
 const historialGeneral=[
@@ -347,8 +361,6 @@ Ventas vs Gastos por día
 
 )}
 
-{/* ventas */}
-
 {screen==="ventas"&&(
 
 <div>
@@ -376,8 +388,6 @@ Agregar venta
 
 )}
 
-{/* gastos */}
-
 {screen==="finanzas"&&(
 
 <div>
@@ -397,6 +407,85 @@ Agregar gasto
 <div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
 <span>{g.nombre} - ${g.precio}</span>
 <button onClick={()=>borrarGasto(i)} className="text-red-400">Eliminar</button>
+</div>
+
+))}
+
+</div>
+
+)}
+
+{screen==="historial"&&(
+
+<div>
+
+<h2 className="text-2xl font-bold mb-6">Historial general</h2>
+
+{historialGeneral.map((m,i)=>(
+
+<div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
+<span>{m.nombre} - ${m.precio}</span>
+<span className={m.tipo==="venta"?"text-green-400":"text-red-400"}>
+{m.tipo}
+</span>
+</div>
+
+))}
+
+<hr className="my-6 border-slate-700"/>
+
+<h3 className="text-lg mb-3 text-blue-400">Historiales personalizados</h3>
+
+<input placeholder="Nombre del historial"
+value={nuevoHistorial}
+onChange={(e)=>setNuevoHistorial(e.target.value)}
+className="w-full mb-3 p-3 rounded bg-slate-800"/>
+
+<button onClick={crearHistorial} className="bg-blue-500 p-3 rounded w-full mb-6">
+Crear historial
+</button>
+
+{historialesFijos.map((h,i)=>(
+
+<div key={i} className="bg-slate-900 p-4 rounded mb-3">
+
+<div className="flex justify-between mb-3">
+<strong>{h.nombre}</strong>
+<button onClick={()=>setHistorialActivo(i)}>Abrir</button>
+</div>
+
+{historialActivo===i&&(
+
+<div>
+
+<input placeholder="Movimiento"
+value={movNombre}
+onChange={(e)=>setMovNombre(e.target.value)}
+className="w-full mb-2 p-2 rounded bg-slate-800"/>
+
+<input placeholder="Monto"
+value={movPrecio}
+onChange={(e)=>setMovPrecio(e.target.value)}
+className="w-full mb-2 p-2 rounded bg-slate-800"/>
+
+<button onClick={agregarMovimientoHistorial}
+className="bg-green-500 p-2 rounded w-full mb-3">
+Agregar
+</button>
+
+{h.movimientos.map((m,j)=>(
+
+<div key={j} className="flex justify-between text-sm mb-1">
+<span>{m.nombre} ${m.precio}</span>
+<button onClick={()=>borrarMovimientoHistorial(j)}>❌</button>
+</div>
+
+))}
+
+</div>
+
+)}
+
 </div>
 
 ))}
