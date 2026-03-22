@@ -129,6 +129,14 @@ export default function App() {
   const totalGastos = gastos.reduce((acc, g) => acc + g.precio, 0);
   const ganancia = totalVentas - totalGastos;
 
+  const porcentajeGastos = totalVentas
+    ? (totalGastos / totalVentas) * 100
+    : 0;
+
+  const porcentajeGanancia = totalVentas
+    ? (ganancia / totalVentas) * 100
+    : 0;
+
   if (!logged) {
 
     return (
@@ -210,6 +218,44 @@ export default function App() {
               <div className="bg-slate-900 p-5 rounded-xl">
                 <p className="text-slate-400 text-sm">Ganancia</p>
                 <h3 className="text-xl font-bold text-green-400">${ganancia}</h3>
+              </div>
+
+            </div>
+
+            {/* GRAFICA */}
+
+            <div className="mt-8">
+
+              <h3 className="text-lg font-bold mb-4">Resumen visual</h3>
+
+              <div className="mb-4">
+                <p className="text-sm text-slate-400 mb-1">Ventas</p>
+                <div className="w-full bg-slate-800 rounded h-4">
+                  <div
+                    className="bg-green-500 h-4 rounded"
+                    style={{ width: "100%" }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <p className="text-sm text-slate-400 mb-1">Gastos</p>
+                <div className="w-full bg-slate-800 rounded h-4">
+                  <div
+                    className="bg-red-500 h-4 rounded"
+                    style={{ width: `${porcentajeGastos}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <p className="text-sm text-slate-400 mb-1">Ganancia</p>
+                <div className="w-full bg-slate-800 rounded h-4">
+                  <div
+                    className="bg-blue-500 h-4 rounded"
+                    style={{ width: `${porcentajeGanancia}%` }}
+                  ></div>
+                </div>
               </div>
 
             </div>
