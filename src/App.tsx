@@ -112,6 +112,91 @@ export default function App() {
     setIsRegister(false);
   }
 
+  function agregarVenta() {
+
+    if (!producto || !precio) return;
+
+    const nuevaVenta = {
+      nombre: producto,
+      precio: Number(precio),
+      fecha: new Date().toLocaleDateString(),
+      tipo: "venta"
+    };
+
+    setVentas([...ventas, nuevaVenta]);
+    setProducto("");
+    setPrecio("");
+  }
+
+  function borrarVenta(index:number){
+    setVentas(ventas.filter((_,i)=> i !== index))
+  }
+
+  function agregarGasto() {
+
+    if (!gastoNombre || !gastoPrecio) return;
+
+    const nuevoGasto = {
+      nombre: gastoNombre,
+      precio: Number(gastoPrecio),
+      fecha: new Date().toLocaleDateString(),
+      tipo: "gasto"
+    };
+
+    setGastos([...gastos, nuevoGasto]);
+    setGastoNombre("");
+    setGastoPrecio("");
+  }
+
+  function borrarGasto(index:number){
+    setGastos(gastos.filter((_,i)=> i !== index))
+  }
+
+  function crearHistorial() {
+
+    if (!nuevoHistorial) return;
+
+    const nuevo = {
+      nombre: nuevoHistorial,
+      movimientos: []
+    };
+
+    setHistorialesFijos([...historialesFijos, nuevo]);
+    setNuevoHistorial("");
+  }
+
+  function agregarMovimientoHistorial(){
+
+    if(historialActivo === null) return
+    if(!movNombre || !movPrecio) return
+
+    const nuevo = {
+      nombre: movNombre,
+      precio: Number(movPrecio),
+      fecha: new Date().toLocaleDateString()
+    }
+
+    const copia = [...historialesFijos]
+    copia[historialActivo].movimientos.push(nuevo)
+
+    setHistorialesFijos(copia)
+
+    setMovNombre("")
+    setMovPrecio("")
+  }
+
+  function borrarMovimientoHistorial(index:number){
+
+    if(historialActivo === null) return
+
+    const copia = [...historialesFijos]
+
+    copia[historialActivo].movimientos =
+      copia[historialActivo].movimientos.filter((_,i)=> i !== index)
+
+    setHistorialesFijos(copia)
+  }
+
   const totalVentas = ventas.reduce((acc, v) => acc + v.precio, 0);
   const totalGastos = gastos.reduce((acc, g) => acc + g.precio, 0);
   const ganancia = totalVentas - totalGastos;
@@ -265,34 +350,6 @@ export default function App() {
 
         )}
 
-        {screen === "ventas" && (
-          <div>
-            <h2 className="text-2xl font-bold">Ventas</h2>
-            <p className="text-slate-400 mt-3">Aquí aparecerá el registro de ventas.</p>
-          </div>
-        )}
-
-        {screen === "finanzas" && (
-          <div>
-            <h2 className="text-2xl font-bold">Gastos</h2>
-            <p className="text-slate-400 mt-3">Aquí aparecerá el registro de gastos.</p>
-          </div>
-        )}
-
-        {screen === "historial" && (
-          <div>
-            <h2 className="text-2xl font-bold">Historial</h2>
-            <p className="text-slate-400 mt-3">Aquí aparecerá el historial.</p>
-          </div>
-        )}
-
-        {screen === "marketing" && (
-          <div>
-            <h2 className="text-2xl font-bold">Marketing</h2>
-            <p className="text-slate-400 mt-3">Aquí estarán las herramientas de marketing.</p>
-          </div>
-        )}
-
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 text-sm">
@@ -309,6 +366,4 @@ export default function App() {
 
   );
 
-}
-
-export {};
+          }
