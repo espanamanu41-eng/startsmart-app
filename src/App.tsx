@@ -4,10 +4,8 @@ type Screen =
   | "inicio"
   | "ventas"
   | "finanzas"
-  | "ia"
-  | "marketing"
   | "historial"
-  | "config";
+  | "marketing";
 
 type Movimiento = {
   nombre: string;
@@ -35,13 +33,13 @@ export default function App() {
     return data ? JSON.parse(data) : [];
   });
 
-  const [producto, setProducto] = useState("");
-  const [precio, setPrecio] = useState("");
-
   const [gastos, setGastos] = useState<Movimiento[]>(() => {
     const data = localStorage.getItem("gastos");
     return data ? JSON.parse(data) : [];
   });
+
+  const [producto, setProducto] = useState("");
+  const [precio, setPrecio] = useState("");
 
   const [gastoNombre, setGastoNombre] = useState("");
   const [gastoPrecio, setGastoPrecio] = useState("");
@@ -95,12 +93,9 @@ export default function App() {
       return;
     }
 
-    const user = { email, password };
-
-    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("user", JSON.stringify({ email, password }));
 
     alert("Usuario registrado");
-
     setIsRegister(false);
   }
 
@@ -145,18 +140,12 @@ export default function App() {
   }
 
   function borrarVenta(index: number) {
-
-    const confirmar = confirm("¿Eliminar esta venta?");
-    if (!confirmar) return;
-
+    if (!confirm("¿Eliminar esta venta?")) return;
     setVentas(ventas.filter((_, i) => i !== index));
   }
 
   function borrarGasto(index: number) {
-
-    const confirmar = confirm("¿Eliminar este gasto?");
-    if (!confirmar) return;
-
+    if (!confirm("¿Eliminar este gasto?")) return;
     setGastos(gastos.filter((_, i) => i !== index));
   }
 
@@ -188,7 +177,7 @@ export default function App() {
   const hoy = new Date().toLocaleDateString();
 
   const ventasHoy = ventas
-    .filter((v) => v.fecha === hoy)
+    .filter(v => v.fecha === hoy)
     .reduce((acc, v) => acc + v.precio, 0);
 
   if (!logged) {
@@ -219,7 +208,7 @@ export default function App() {
 
           <button
             onClick={isRegister ? handleRegister : handleLogin}
-            className="w-full bg-green-500 hover:bg-green-600 p-3 rounded font-semibold"
+            className="w-full bg-green-500 p-3 rounded"
           >
             {isRegister ? "Registrarse" : "Iniciar sesión"}
           </button>
@@ -238,6 +227,7 @@ export default function App() {
   }
 
   return (
+
     <div className="flex flex-col min-h-screen bg-slate-950 text-white">
 
       <header className="p-4 border-b border-slate-800">
@@ -247,7 +237,9 @@ export default function App() {
       <main className="flex-1 p-5 pb-24">
 
         {screen === "inicio" && (
+
           <div>
+
             <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
 
             <div className="grid grid-cols-2 gap-4">
@@ -280,6 +272,69 @@ export default function App() {
             </div>
 
           </div>
+
+        )}
+
+        {screen === "ventas" && (
+
+          <div>
+
+            <h2 className="text-2xl font-bold mb-4">Registrar venta</h2>
+
+            <input
+              placeholder="Producto"
+              value={producto}
+              onChange={(e) => setProducto(e.target.value)}
+              className="w-full mb-3 p-3 rounded bg-slate-800"
+            />
+
+            <input
+              placeholder="Precio"
+              value={precio}
+              onChange={(e) => setPrecio(e.target.value)}
+              className="w-full mb-3 p-3 rounded bg-slate-800"
+            />
+
+            <button
+              onClick={agregarVenta}
+              className="bg-green-500 p-3 rounded w-full"
+            >
+              Agregar venta
+            </button>
+
+          </div>
+
+        )}
+
+        {screen === "finanzas" && (
+
+          <div>
+
+            <h2 className="text-2xl font-bold mb-4">Registrar gasto</h2>
+
+            <input
+              placeholder="Nombre del gasto"
+              value={gastoNombre}
+              onChange={(e) => setGastoNombre(e.target.value)}
+              className="w-full mb-3 p-3 rounded bg-slate-800"
+            />
+
+            <input
+              placeholder="Monto"
+              value={gastoPrecio}
+              onChange={(e) => setGastoPrecio(e.target.value)}
+              className="w-full mb-3 p-3 rounded bg-slate-800"
+            />
+
+            <button
+              onClick={agregarGasto}
+              className="bg-red-500 p-3 rounded w-full"
+            >
+              Agregar gasto
+            </button>
+
+          </div>
+
         )}
 
         {screen === "historial" && (
@@ -288,13 +343,11 @@ export default function App() {
 
             <h2 className="text-2xl font-bold mb-4">Historial</h2>
 
-            <h3 className="text-lg font-bold mb-2">📌 Historial fijo</h3>
-
             <input
               placeholder="Nombre del historial"
               value={nuevoHistorial}
               onChange={(e) => setNuevoHistorial(e.target.value)}
-              className="w-full mb-2 p-3 rounded bg-slate-800"
+              className="w-full mb-3 p-3 rounded bg-slate-800"
             />
 
             <button
@@ -304,21 +357,6 @@ export default function App() {
               Crear historial
             </button>
 
-            {historialesFijos.map((h, i) => (
-
-              <div
-                key={i}
-                className="bg-slate-900 p-3 rounded mb-2"
-              >
-                {h.nombre}
-              </div>
-
-            ))}
-
-            <hr className="my-6 border-slate-800" />
-
-            <h3 className="text-lg font-bold mb-2">📊 Historial general</h3>
-
             {historialGeneral.map((m, i) => (
 
               <div
@@ -327,21 +365,11 @@ export default function App() {
               >
 
                 <div>
-                  <span>
-                    {m.tipo === "venta" ? "Venta - " : "Gasto - "}
-                    {m.nombre}
-                  </span>
-
+                  <span>{m.tipo === "venta" ? "Venta - " : "Gasto - "}{m.nombre}</span>
                   <p className="text-xs text-slate-400">{m.fecha}</p>
                 </div>
 
-                <span
-                  className={
-                    m.tipo === "venta"
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }
-                >
+                <span className={m.tipo === "venta" ? "text-green-400" : "text-red-400"}>
                   {m.tipo === "venta" ? "+" : "-"}${m.precio}
                 </span>
 
@@ -366,5 +394,7 @@ export default function App() {
       </nav>
 
     </div>
+
   );
-        }
+
+}
