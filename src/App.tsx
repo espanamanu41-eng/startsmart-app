@@ -123,11 +123,11 @@ fecha:new Date().toLocaleDateString(),
 tipo:"venta"
 }
 
-setVentas([...ventas,nuevaVenta])
 
 // guardar en Firebase
 await addDoc(collection(db,"ventas"),nuevaVenta)
-
+await cargarVentas()
+    
 setProducto("")
 setPrecio("")
 }
