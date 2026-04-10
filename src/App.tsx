@@ -176,12 +176,13 @@ if(!ventas[i].id) return
 
 if(confirm("¿Eliminar esta venta?")){
 
-await deleteDoc(doc(db, "ventas", ventas[i].id!))
+await deleteDoc(
+  doc(db, "users", user.uid, "ventas", ventas[i].id!)
+)
 
 await cargarVentas()
 
 }
-
 }
 
 async function borrarGasto(i:number){
@@ -190,13 +191,14 @@ if(!gastos[i].id) return
 
 if(confirm("¿Eliminar este gasto?")){
 
-await deleteDoc(doc(db, "gastos", gastos[i].id))
+await deleteDoc(
+  doc(db, "users", user.uid, "gastos", gastos[i].id!)
+)
 
 await cargarGastos()
 
 }
 }
-
 function crearHistorial(){
 
 if(!nuevoHistorial){
