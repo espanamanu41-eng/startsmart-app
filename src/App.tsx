@@ -295,44 +295,48 @@ return acc
 
 },[])
 
-if(!logged){
+if (!user) {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
 
-return(
+      <div className="bg-slate-900 p-8 rounded-2xl w-80">
 
-<div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
+        <h1 className="text-2xl font-bold mb-6 text-center text-green-400">
+          StartSmart
+        </h1>
 
-<div className="bg-slate-900 p-8 rounded-2xl w-80">
+        <input
+          placeholder="Correo"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full mb-3 p-3 rounded bg-slate-800"
+        />
 
-<h1 className="text-2xl font-bold mb-6 text-center text-green-400">
-StartSmart
-</h1>
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full mb-4 p-3 rounded bg-slate-800"
+        />
 
-<input placeholder="Correo"
-value={email}
-onChange={(e)=>setEmail(e.target.value)}
-className="w-full mb-3 p-3 rounded bg-slate-800"/>
+        <button
+          onClick={handleLogin}
+          className="w-full bg-green-500 p-3 rounded"
+        >
+          {isRegister ? "Registrarse" : "Iniciar sesión"}
+        </button>
 
-<input type="password"
-placeholder="Contraseña"
-value={password}
-onChange={(e)=>setPassword(e.target.value)}
-className="w-full mb-4 p-3 rounded bg-slate-800"/>
+        <p
+          onClick={() => setIsRegister(!isRegister)}
+          className="text-center text-sm text-green-400 mt-4 cursor-pointer"
+        >
+          {isRegister ? "Ya tengo cuenta" : "Crear cuenta"}
+        </p>
 
-<button
-onClick={handleLogin}
-className="w-full bg-green-500 p-3 rounded"
->
-{isRegister ? "Registrarse" : "Iniciar sesión"}
-</button>
-<p
-onClick={()=>setIsRegister(!isRegister)}
-className="text-center text-sm text-green-400 mt-4 cursor-pointer">
-{isRegister?"Ya tengo cuenta":"Crear cuenta"}
-</p>
-
-</div>
-</div>
-)
+      </div>
+    </div>
+  )
 }
 
 return(
