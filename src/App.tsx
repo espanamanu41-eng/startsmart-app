@@ -44,14 +44,25 @@ const [precio,setPrecio]=useState("")
 const [gastoNombre,setGastoNombre]=useState("")
 const [gastoPrecio,setGastoPrecio]=useState("")
 
+const cargarVentas = async () => {
+  const snapshot = await getDocs(collection(db, "ventas"));
+  const datos:any[] = [];
+
+  snapshot.forEach((doc) => {
+    datos.push(doc.data());
+  });
+
+  setVentas(datos);
+};
+
+useEffect(() => {
+  cargarVentas();
+}, []);
+  
 const [nuevoHistorial,setNuevoHistorial]=useState("")
 const [historialActivo,setHistorialActivo]=useState<number|null>(null)
 const [movNombre,setMovNombre]=useState("")
 const [movPrecio,setMovPrecio]=useState("")
-
-useEffect(()=>{
-localStorage.setItem("ventas",JSON.stringify(ventas))
-},[ventas])
 
 useEffect(()=>{
 localStorage.setItem("gastos",JSON.stringify(gastos))
