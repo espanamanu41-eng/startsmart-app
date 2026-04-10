@@ -139,7 +139,7 @@ tipo:"venta"
 
 
 // guardar en Firebase
-await addDoc(collection(db,"ventas"),nuevaVenta)
+await addDoc(collection(db, "users", user.uid, "ventas"), nuevaVenta)
 await cargarVentas()
     
 setProducto("")
@@ -162,8 +162,7 @@ tipo:"gasto"
 }
 
 // guardar en Firebase
-await addDoc(collection(db,"gastos"),nuevoGasto)
-
+await addDoc(collection(db, "users", user.uid, "gastos"), nuevoGasto)
 // recargar
 await cargarGastos()
 
