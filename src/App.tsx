@@ -28,7 +28,7 @@ const [isRegister,setIsRegister]=useState(false)
 
 const [ventas, setVentas] = useState<Movimiento[]>([]);
 
-const [gastos, setGastos] = useState<any[]>([])
+const [gastos, setGastos] = useState<Movimiento[]>([])
 
 const [historialesFijos,setHistorialesFijos]=useState<HistorialFijo[]>(()=>{
 const data=localStorage.getItem("historialesFijos")
