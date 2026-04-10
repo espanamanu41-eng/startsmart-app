@@ -54,9 +54,22 @@ const cargarVentas = async () => {
 
   setVentas(datos);
 };
+const cargarGastos = async () => {
+  const snapshot = await getDocs(collection(db, "gastos"));
+  const datos:any[] = [];
 
+  snapshot.forEach((doc) => {
+    datos.push({
+      id: doc.id,
+      ...doc.data()
+    });
+  });
+
+  setGastos(datos);
+};
 useEffect(() => {
   cargarVentas();
+  cargarGastos();
 }, []);
   
 const [nuevoHistorial,setNuevoHistorial]=useState("")
