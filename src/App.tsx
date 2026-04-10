@@ -26,10 +26,7 @@ const [email,setEmail]=useState("")
 const [password,setPassword]=useState("")
 const [isRegister,setIsRegister]=useState(false)
 
-const [ventas,setVentas]=useState<Movimiento[]>(()=>{
-const data=localStorage.getItem("ventas")
-return data?JSON.parse(data):[]
-})
+const [ventas, setVentas] = useState<Movimiento[]>([]);
 
 const [gastos,setGastos]=useState<Movimiento[]>(()=>{
 const data=localStorage.getItem("gastos")
