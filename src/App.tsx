@@ -53,7 +53,8 @@ const [gastoPrecio,setGastoPrecio]=useState("")
 }, []) 
 
 const cargarVentas = async () => {
-  const snapshot = await getDocs(collection(db, "ventas"));
+ if(!user) return
+  const snapshot = await getDocs(collection(db, "users", user.uid, "ventas"));
   const datos:any[] = [];
 
  snapshot.forEach((doc) => {
@@ -66,7 +67,12 @@ const cargarVentas = async () => {
   setVentas(datos);
 };
 const cargarGastos = async () => {
-  const snapshot = await getDocs(collection(db, "gastos"));
+  if(!user) return
+
+  const snapshot = await getDocs(
+    collection(db, "users", user.uid, "gastos")
+  );
+
   const datos:any[] = [];
 
   snapshot.forEach((doc) => {
@@ -79,18 +85,16 @@ const cargarGastos = async () => {
   setGastos(datos);
 };
 useEffect(() => {
-  cargarVentas();
-  cargarGastos();
-}, []);
-  
+  if (user) {
+    cargarVentas();
+    cargarGastos();
+  }
+}, [user]);
+ 
 const [nuevoHistorial,setNuevoHistorial]=useState("")
 const [historialActivo,setHistorialActivo]=useState<number|null>(null)
 const [movNombre,setMovNombre]=useState("")
 const [movPrecio,setMovPrecio]=useState("")
-
-useEffect(()=>{
-localStorage.setItem("gastos",JSON.stringify(gastos))
-},[gastos])
 
 useEffect(()=>{
 localStorage.setItem("historialesFijos",JSON.stringify(historialesFijos))
