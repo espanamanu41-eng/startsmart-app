@@ -48,9 +48,12 @@ const cargarVentas = async () => {
   const snapshot = await getDocs(collection(db, "ventas"));
   const datos:any[] = [];
 
-  snapshot.forEach((doc) => {
-    datos.push(doc.data());
+ snapshot.forEach((doc) => {
+  datos.push({
+    id: doc.id,
+    ...doc.data()
   });
+});
 
   setVentas(datos);
 };
@@ -152,10 +155,18 @@ setGastoNombre("")
 setGastoPrecio("")
 }
 
-function borrarVenta(i:number){
+async function borrarVenta(i:number){
+
+if(!ventas[i].id) return
+
 if(confirm("¿Eliminar esta venta?")){
-setVentas(ventas.filter((_,index)=>index!==i))
+
+await deleteDoc(doc(db, "ventas", ventas[i].id!))
+
+await cargarVentas()
+
 }
+
 }
 
 function borrarGasto(i:number){
