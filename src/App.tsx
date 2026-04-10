@@ -133,7 +133,7 @@ setPrecio("")
 }
 
 
-function agregarGasto(){
+async function agregarGasto(){
 
 if(!gastoNombre||!gastoPrecio){
 alert("Debes llenar gasto y monto")
@@ -147,7 +147,12 @@ fecha:new Date().toLocaleDateString(),
 tipo:"gasto"
 }
 
-setGastos([...gastos,nuevoGasto])
+// guardar en Firebase
+await addDoc(collection(db,"gastos"),nuevoGasto)
+
+// recargar
+await cargarGastos()
+
 setGastoNombre("")
 setGastoPrecio("")
 }
@@ -166,9 +171,16 @@ await cargarVentas()
 
 }
 
-function borrarGasto(i:number){
+async function borrarGasto(i:number){
+
+if(!gastos[i].id) return
+
 if(confirm("¿Eliminar este gasto?")){
-setGastos(gastos.filter((_,index)=>index!==i))
+
+await deleteDoc(doc(db, "gastos", gastos[i].id))
+
+await cargarGastos()
+
 }
 }
 
