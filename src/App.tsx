@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { db } from "./firebase";
 import { auth } from "./firebase"
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth"
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth"
 
 type Screen = "inicio" | "ventas" | "finanzas" | "historial";
 
@@ -39,9 +39,18 @@ return data?JSON.parse(data):[]
 
 const [producto,setProducto]=useState("")
 const [precio,setPrecio]=useState("")
+const [user, setUser] = useState<any>(null)
 
 const [gastoNombre,setGastoNombre]=useState("")
 const [gastoPrecio,setGastoPrecio]=useState("")
+
+ useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    setUser(currentUser)
+  })
+
+  return () => unsubscribe()
+}, []) 
 
 const cargarVentas = async () => {
   const snapshot = await getDocs(collection(db, "ventas"));
