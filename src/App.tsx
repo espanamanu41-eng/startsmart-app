@@ -87,40 +87,26 @@ useEffect(()=>{
 localStorage.setItem("historialesFijos",JSON.stringify(historialesFijos))
 },[historialesFijos])
 
-function handleLogin(){
+async function handleLogin(){
 
 if(!email||!password){
 alert("Debes llenar correo y contraseña")
 return
 }
 
-const savedUser=localStorage.getItem("user")
+try {
 
-if(!savedUser){
-alert("Usuario no registrado")
-return
-}
-
-const user=JSON.parse(savedUser)
-
-if(user.email===email && user.password===password){
-setLogged(true)
+if(isRegister){
+  await createUserWithEmailAndPassword(auth, email, password)
+  alert("Usuario creado")
 }else{
-alert("Correo o contraseña incorrectos")
+  await signInWithEmailAndPassword(auth, email, password)
+  alert("Bienvenido")
 }
 
+} catch (error:any){
+  alert(error.message)
 }
-
-function handleRegister(){
-
-if(!email||!password){
-alert("Debes llenar correo y contraseña")
-return
-}
-
-localStorage.setItem("user",JSON.stringify({email,password}))
-alert("Usuario registrado")
-setIsRegister(false)
 
 }
 
