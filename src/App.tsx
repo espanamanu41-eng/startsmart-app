@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 
 type Screen = "inicio" | "ventas" | "finanzas" | "historial";
