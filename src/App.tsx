@@ -319,11 +319,11 @@ onChange={(e)=>setPassword(e.target.value)}
 className="w-full mb-4 p-3 rounded bg-slate-800"/>
 
 <button
-onClick={isRegister?handleRegister:handleLogin}
-className="w-full bg-green-500 p-3 rounded">
-{isRegister?"Registrarse":"Iniciar sesión"}
+onClick={handleLogin}
+className="w-full bg-green-500 p-3 rounded"
+>
+{isRegister ? "Registrarse" : "Iniciar sesión"}
 </button>
-
 <p
 onClick={()=>setIsRegister(!isRegister)}
 className="text-center text-sm text-green-400 mt-4 cursor-pointer">
