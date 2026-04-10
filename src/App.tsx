@@ -23,7 +23,7 @@ export default function App(){
 
 const [logged,setLogged]=useState(false)
 const [screen,setScreen]=useState<Screen>("inicio")
-
+const [loading, setLoading] = useState(true)
 const [email,setEmail]=useState("")
 const [password,setPassword]=useState("")
 const [isRegister,setIsRegister]=useState(false)
