@@ -21,7 +21,6 @@ movimientos:Movimiento[]
 
 export default function App(){
 
-const [logged,setLogged]=useState(false)
 const [screen,setScreen]=useState<Screen>("inicio")
 const [loading, setLoading] = useState(true)
 const [email,setEmail]=useState("")
@@ -47,10 +46,11 @@ const [gastoPrecio,setGastoPrecio]=useState("")
  useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
     setUser(currentUser)
+    setLoading(false)
   })
 
   return () => unsubscribe()
-}, []) 
+}, [])
 
 const cargarVentas = async () => {
  if(!user) return
