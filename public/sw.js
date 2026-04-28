@@ -1,4 +1,4 @@
-const CACHE_NAME = "startsmart-cache-v3";
+const CACHE_NAME = "startsmart-cache-v" + Date.now();
 
 const urlsToCache = [
   "/",
@@ -9,8 +9,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener("install", (event) => {
-  self.skipWaiting(); // activa inmediatamente
-
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(urlsToCache);
@@ -30,14 +29,16 @@ self.addEventListener("activate", (event) => {
       );
     })
   );
-
   return self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
+  if (event.request.url.includes("/api/")) {
+    return fetch(event.request);
+  }
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });
