@@ -215,7 +215,7 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
       });
       const data = await response.json();
       const text = data?.content?.[0]?.text;
-const respuesta = text ? text : (data?.error ?? JSON.stringify(data));
+const respuesta = text ? text : "Error: " + (data?.error?.message ?? "respuesta inesperada");
       setMensajes([...nuevosMensajes, { rol: "assistant", texto: respuesta }]);
     } catch {
       setMensajes([...nuevosMensajes, { rol: "assistant", texto: "Hubo un error al conectar. Intenta de nuevo." }]);
