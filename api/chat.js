@@ -2,7 +2,7 @@ export const config = {
   runtime: "edge",
 };
 
-export default async function handler(req: Request) {
+export default async function handler(req) {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
@@ -14,7 +14,7 @@ export default async function handler(req: Request) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY!,
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify(body),
