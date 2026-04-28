@@ -203,7 +203,7 @@ El negocio del usuario tiene estos datos actuales:
 - Ganancia neta: $${ganancia}
 Da consejos prácticos, concretos y motivadores. Responde siempre en español. Sé conciso (máximo 3 párrafos).`;
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
