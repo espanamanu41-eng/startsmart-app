@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   "https://ivfqtuspgxnubwvuubyk.supabase.co",
-  "sb_publishable_4a7FqHEHAm0RgHbnJra29w_nJFh1K2K"
+  "sb_publishable_i7-55XtmSMMv1aistkP-nQ_jqANxYGr"
 );
 
 type Screen = "inicio" | "ventas" | "finanzas" | "historial" | "asistente";
