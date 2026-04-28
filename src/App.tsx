@@ -207,7 +207,7 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-opus-4-6",
+          model: "claude-haiku-4-5-20251001",
           max_tokens: 1000,
           system: contexto,
           messages: nuevosMensajes.map((m) => ({ role: m.rol, content: m.texto })),
