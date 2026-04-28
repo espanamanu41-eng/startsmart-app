@@ -214,7 +214,8 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
         }),
       });
       const data = await response.json();
-      const respuesta = data?.content?.[0]?.text ?? "Lo siento, no pude procesar tu mensaje.";
+      const text = data?.content?.[0]?.text;
+const respuesta = text ? text : (data?.error ?? JSON.stringify(data));
       setMensajes([...nuevosMensajes, { rol: "assistant", texto: respuesta }]);
     } catch {
       setMensajes([...nuevosMensajes, { rol: "assistant", texto: "Hubo un error al conectar. Intenta de nuevo." }]);
