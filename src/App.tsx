@@ -243,7 +243,7 @@ function NotificacionesPanel() {
   );
 }
 
-function SidePanel({ user, onClose }: { user: any; onClose: () => void }) {
+function SidePanel({ user, onClose, setScreen, inventario }: { user: any; onClose: () => void; setScreen: (s: any) => void; inventario: any[] }) {
   const [nombreNegocio, setNombreNegocio] = useState(() => localStorage.getItem("nombreNegocio") || "");
   const [guardadoNombre, setGuardadoNombre] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -657,7 +657,7 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
       )}
 
       {modal && <ModalConfirm config={modal} onClose={() => setModal(null)} />}
-      {panelOpen && <SidePanel user={user} onClose={() => setPanelOpen(false)} />}
+      {panelOpen && <SidePanel user={user} onClose={() => setPanelOpen(false)} setScreen={setScreen} inventario={inventario} />}
 
       <header className="p-4 border-b border-slate-800 flex items-center gap-3">
         {fotoPerfil && (
