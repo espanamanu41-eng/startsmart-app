@@ -105,18 +105,23 @@ function NotificacionesPanel() {
     setHorarios(copia);
   };
 
-  const handleGuardar = () => {
+  const handleGuardar = async () => {
     localStorage.setItem("horarios", JSON.stringify(horarios));
-    if ("Notification" in window) {
-      Notification.requestPermission().then(perm => {
-        if (perm === "granted") {
-          setGuardado(true);
-          setTimeout(() => { setGuardado(false); setDiaSeleccionado(null); }, 2000);
-        }
-      });
-    } else {
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") {
+      const sub = await suscribirPush();
+      if (sub) {
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        await fetch("/api/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscription: sub, user_id: userId, horarios }),
+        });
+      }
       setGuardado(true);
       setTimeout(() => { setGuardado(false); setDiaSeleccionado(null); }, 2000);
+    } else {
+      alert("Necesitas permitir notificaciones.");
     }
   };
 
