@@ -1,4 +1,10 @@
 import webpush from "web-push";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 webpush.setVapidDetails(
   process.env.VAPID_SUBJECT,
@@ -12,12 +18,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { subscription, title, body } = req.body;
+    const { subscription, title, body, user_id, horarios } = req.body;
 
-    await webpush.sendNotification(
-      subscription,
-      JSON.stringify({ title, body })
-    );
+    if (user_id && horarios) {
+      await supabase.from("suscripciones").upsert({
+        user_id,
+        subscription,
+        horarios,
+      }, { onConflict: "user_id" });
+    }
+
+    if (title && body) {
+      await webpush.sendNotification(subscription, JSON.stringify({ title, body }));
+    }
 
     return res.status(200).json({ ok: true });
   } catch (error) {
