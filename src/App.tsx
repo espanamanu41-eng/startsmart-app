@@ -8,6 +8,8 @@ const supabase = createClient(
   "sb_publishable_i7-55XtmSMMv1aistkP-nQ_jqANxYGr"
 );
 
+const VAPID_PUBLIC_KEY = "BJRvbwSKnhHjgUFPx3WHa0pYe0WGDOjw4OFmwlJxqluJPe8ZqnRssNFLsohFcOXoklUANZW0bIEE5bPfLUlGdgo";
+
 type Screen = "inicio" | "ventas" | "finanzas" | "historial" | "asistente";
 type Movimiento = { id?: string; nombre: string; precio: number; fecha: string; tipo?: "venta" | "gasto" };
 type HistorialFijo = { nombre: string; movimientos: Movimiento[] };
@@ -53,8 +55,6 @@ function calcCierreNotif(cierre: string) {
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
-const VAPID_PUBLIC_KEY = "BJRvbwSKnhHjgUFPx3WHa0pYe0WGDOjw4OFmwlJxqluJPe8ZqnRssNFLsohFcOXoklUANZW0bIEE5bPfLUlGdgo";
-
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -64,13 +64,18 @@ function urlBase64ToUint8Array(base64String: string) {
 
 async function suscribirPush() {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return null;
-  const reg = await navigator.serviceWorker.ready;
-  const existing = await reg.pushManager.getSubscription();
-  if (existing) return existing;
-  return await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-  });
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) return existing;
+    return await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+  } catch (e) {
+    console.error("Error suscribiendo push:", e);
+    return null;
+  }
 }
 
 function ModalConfirm({ config, onClose }: { config: ModalConfig; onClose: () => void }) {
@@ -112,6 +117,7 @@ function NotificacionesPanel() {
   });
   const [diaSeleccionado, setDiaSeleccionado] = useState<number | null>(null);
   const [guardado, setGuardado] = useState(false);
+  const [cargando, setCargando] = useState(false);
 
   const toggleDia = (idx: number) => {
     const copia = [...horarios];
@@ -126,23 +132,30 @@ function NotificacionesPanel() {
   };
 
   const handleGuardar = async () => {
+    setCargando(true);
     localStorage.setItem("horarios", JSON.stringify(horarios));
-    const perm = await Notification.requestPermission();
-    if (perm === "granted") {
-      const sub = await suscribirPush();
-     alert("Sub: " + (sub ? "OK" : "FALLÓ"));
-      if (sub) {
-        const userId = (await supabase.auth.getUser()).data.user?.id;
-        await fetch("/api/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subscription: sub, user_id: userId, horarios }),
-        });
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm === "granted") {
+        const sub = await suscribirPush();
+        if (sub) {
+          const { data: { user } } = await supabase.auth.getUser();
+          const res = await fetch("/api/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ subscription: sub.toJSON(), user_id: user?.id, horarios }),
+          });
+          if (!res.ok) throw new Error("Error al guardar");
+        }
+        setGuardado(true);
+        setTimeout(() => { setGuardado(false); setDiaSeleccionado(null); }, 2000);
+      } else {
+        alert("Necesitas permitir notificaciones en tu navegador.");
       }
-      setGuardado(true);
-      setTimeout(() => { setGuardado(false); setDiaSeleccionado(null); }, 2000);
-    } else {
-      alert("Necesitas permitir notificaciones.");
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -230,9 +243,9 @@ function NotificacionesPanel() {
         </div>
       </div>
 
-      <button onClick={handleGuardar}
-        className={`w-full p-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${guardado ? "bg-green-600" : "bg-green-500"} text-white`}>
-        {guardado ? <><Check size={14} /> Guardado</> : "Guardar horarios"}
+      <button onClick={handleGuardar} disabled={cargando}
+        className={`w-full p-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${guardado ? "bg-green-600" : "bg-green-500"} text-white disabled:opacity-50`}>
+        {cargando ? "Guardando..." : guardado ? <><Check size={14} /> Activado</> : "Activar notificaciones"}
       </button>
     </div>
   );
@@ -277,6 +290,7 @@ function SidePanel({ user, onClose }: { user: any; onClose: () => void }) {
 
   const handleCerrarSesion = async () => {
     await supabase.auth.signOut();
+    sessionStorage.removeItem("sessionVerified");
     onClose();
   };
 
@@ -356,6 +370,7 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [isRegister, setIsRegister] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [sessionVerified, setSessionVerified] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [nombreNegocio, setNombreNegocio] = useState(() => localStorage.getItem("nombreNegocio") || "StartSmart");
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(() => localStorage.getItem("fotoPerfil"));
@@ -394,7 +409,7 @@ export default function App() {
     }
   }, [panelOpen]);
 
-  // ── Update prompt PWA ──
+  // Update prompt PWA
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.getRegistration().then((reg) => {
@@ -423,6 +438,14 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Session timeout — cerrar sesión al abrir la app
+  useEffect(() => {
+    if (user && !sessionStorage.getItem("sessionVerified")) {
+      supabase.auth.signOut();
+      setUser(null);
+    }
+  }, [user]);
+
   useEffect(() => { if (user) { cargarVentas(); cargarGastos(); } }, [user]);
   useEffect(() => { localStorage.setItem("historialesFijos", JSON.stringify(historialesFijos)); }, [historialesFijos]);
 
@@ -438,6 +461,8 @@ export default function App() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        // Marcar sesión verificada en esta apertura
+        sessionStorage.setItem("sessionVerified", "true");
       }
     } catch (error: any) { alert(error.message); }
   }
@@ -590,7 +615,6 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-white">
 
-      {/* Banner de actualización */}
       {hayActualizacion && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-green-500 text-white text-sm p-3 flex justify-between items-center">
           <span>🆕 Nueva versión disponible</span>
