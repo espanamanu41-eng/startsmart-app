@@ -1,5 +1,4 @@
-const CACHE_VERSION = "v3";
-const CACHE_NAME = "startsmart-cache-" + CACHE_VERSION;
+const CACHE_NAME = "startsmart-cache-" + Date.now();
 
 const urlsToCache = [
   "/",
