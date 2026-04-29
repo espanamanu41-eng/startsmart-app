@@ -334,7 +334,7 @@ function SidePanel({ user, onClose }: { user: any; onClose: () => void }) {
               </div>
             )}
           </MenuItem>
-          <MenuItem icon={Share2} label="Compartir app" onClick={handleCompartir} />
+          <MenuItem icon={Package} label="Inventario" sublabel={`${inventario?.length || 0} productos`} onClick={() => { setScreen("inventario"); onClose(); }} />
           <MenuItem icon={HelpCircle} label="Ayuda" onClick={() => {}} />
           <div className="border-t border-slate-800 my-3" />
           <MenuItem icon={LogOut} label="Cerrar sesión" onClick={handleCerrarSesion} danger />
@@ -859,7 +859,6 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
         <button onClick={() => setScreen("ventas")} className={screen === "ventas" ? "text-green-400" : "text-slate-400"}>Ventas</button>
         <button onClick={() => setScreen("finanzas")} className={screen === "finanzas" ? "text-green-400" : "text-slate-400"}>Gastos</button>
         <button onClick={() => setScreen("historial")} className={screen === "historial" ? "text-green-400" : "text-slate-400"}>Historial</button>
-        <button onClick={() => setScreen("inventario")} className={screen === "inventario" ? "text-orange-400" : "text-slate-400"}>📦</button>
         <button onClick={() => setScreen("asistente")} className={screen === "asistente" ? "text-purple-400 font-semibold" : "text-slate-400"}>IA ✦</button>
       </nav>
     </div>
