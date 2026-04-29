@@ -425,19 +425,16 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (user && !sessionStorage.getItem("sessionVerified")) {
+    if (!user) return;
+    if (!sessionStorage.getItem("sessionVerified")) {
       supabase.auth.signOut();
       setUser(null);
+      return;
     }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      cargarVentas();
-      cargarGastos();
-      cargarHistoriales();
-      cargarInventario();
-    }
+    cargarVentas();
+    cargarGastos();
+    cargarHistoriales();
+    cargarInventario();
   }, [user]);
 
   const mostrarModal = (mensaje: string, onConfirm: () => void) => setModal({ mensaje, onConfirm });
