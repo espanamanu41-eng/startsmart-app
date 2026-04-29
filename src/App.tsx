@@ -130,6 +130,7 @@ function NotificacionesPanel() {
     const perm = await Notification.requestPermission();
     if (perm === "granted") {
       const sub = await suscribirPush();
+     alert("Sub: " + (sub ? "OK" : "FALLÓ"));
       if (sub) {
         const userId = (await supabase.auth.getUser()).data.user?.id;
         await fetch("/api/notify", {
