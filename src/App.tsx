@@ -22,7 +22,7 @@ const HORARIOS_DEFAULT = DIAS_LABELS.map((_, i) => ({
   activo: i < 5,
   apertura: i < 5 ? "09:00" : "10:00",
   cierre: i < 5 ? "19:00" : "15:00", 
-})); 
+}));  
 
 const MSGS_MANANA = [
   "¡Nuevo día, nueva oportunidad de vender! 🚀",
