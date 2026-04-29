@@ -2,7 +2,7 @@ const CACHE_NAME = "startsmart-cache-" + Date.now();
 
 const urlsToCache = [
   "/",
-  "/index.html",
+  "/index.html", 
   "/manifest.json",
   "/icon-192.png",
   "/icon-512.png"
