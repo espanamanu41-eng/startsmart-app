@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { createClient } from "@supabase/supabase-js";
-import { Store, Info, Share2, Bell, HelpCircle, LogOut, ChevronDown, ChevronUp, Plus, Check, Package } from "lucide-react";
+import { Store, Info, Share2, Bell, HelpCircle, LogOut, ChevronDown, ChevronUp, Plus, Check, Package, Download } from "lucide-react";
 
 const supabase = createClient(
   "https://ivfqtuspgxnubwvuubyk.supabase.co",
@@ -44,6 +44,8 @@ const MSGS_NOCHE = [
   "¡No pierdas ni un peso! Registra antes de cerrar 💼",
 ];
 
+const MESES = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
 function calcMedioDia(apertura: string, cierre: string) {
   const [h1] = apertura.split(":").map(Number);
   const [h2] = cierre.split(":").map(Number);
@@ -76,6 +78,40 @@ async function suscribirPush() {
   } catch (e) {
     return null;
   }
+}
+
+// ─── Exportar datos como CSV ─────────────────────────────
+function exportarCSV(ventas: Movimiento[], gastos: Movimiento[], nombreNegocio: string) {
+  const filas = [
+    ["Tipo", "Nombre", "Monto", "Fecha"],
+    ...ventas.map(v => ["Venta", v.nombre, v.precio.toString(), v.fecha]),
+    ...gastos.map(g => ["Gasto", g.nombre, g.precio.toString(), g.fecha]),
+  ];
+  const csv = filas.map(f => f.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${nombreNegocio || "StartSmart"}-datos.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Tooltip personalizado ────────────────────────────────
+function CustomTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs">
+        <p className="text-slate-400 mb-1">{label}</p>
+        {payload.map((p: any) => (
+          <p key={p.name} style={{ color: p.color }} className="font-semibold">
+            {p.name === "ventas" ? "Ventas" : "Gastos"}: ${p.value?.toLocaleString()}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
 }
 
 function ModalConfirm({ config, onClose }: { config: ModalConfig; onClose: () => void }) {
@@ -243,17 +279,51 @@ function NotificacionesPanel() {
   );
 }
 
-function SidePanel({ user, onClose, setScreen, inventario }: { user: any; onClose: () => void; setScreen: (s: any) => void; inventario: any[] }) {
-  const [nombreNegocio, setNombreNegocio] = useState(() => localStorage.getItem("nombreNegocio") || "");
+function AyudaPanel() {
+  const faqs = [
+    { q: "¿Cómo agrego una venta?", a: "Ve a la pantalla Ventas, escribe el nombre del producto y el precio, luego toca Agregar venta." },
+    { q: "¿Cómo funciona el inventario?", a: "Toca el menú lateral → Inventario. Ahí puedes agregar productos con su stock y precio. Te avisará cuando el stock esté bajo." },
+    { q: "¿Mis datos están seguros?", a: "Sí, todos tus datos se guardan en la nube con tu cuenta. Solo tú puedes verlos." },
+    { q: "¿Puedo usar la app en otro celular?", a: "Sí, solo inicia sesión con tu correo y contraseña en cualquier dispositivo." },
+    { q: "¿Cómo exporto mis datos?", a: "Toca el menú lateral → Exportar datos. Se descargará un archivo CSV con todas tus ventas y gastos." },
+    { q: "¿Qué hace el Asistente IA?", a: "Analiza tus finanzas y te da consejos personalizados para mejorar tu negocio." },
+  ];
+  const [abierto, setAbierto] = useState<number | null>(null);
+  return (
+    <div className="px-3 pb-3 space-y-2">
+      {faqs.map((faq, i) => (
+        <div key={i} className="bg-slate-800 rounded-xl overflow-hidden">
+          <button onClick={() => setAbierto(abierto === i ? null : i)}
+            className="w-full text-left p-3 flex justify-between items-center">
+            <span className="text-white text-xs font-medium">{faq.q}</span>
+            {abierto === i ? <ChevronUp size={12} className="text-slate-400 flex-shrink-0" /> : <ChevronDown size={12} className="text-slate-400 flex-shrink-0" />}
+          </button>
+          {abierto === i && (
+            <div className="px-3 pb-3">
+              <p className="text-slate-400 text-xs leading-relaxed">{faq.a}</p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SidePanel({ user, onClose, setScreen, inventario, ventas, gastos, nombreNegocio }: {
+  user: any; onClose: () => void; setScreen: (s: any) => void;
+  inventario: any[]; ventas: any[]; gastos: any[]; nombreNegocio: string;
+}) {
+  const [nombreNegocioEdit, setNombreNegocioEdit] = useState(() => localStorage.getItem("nombreNegocio") || "");
   const [guardadoNombre, setGuardadoNombre] = useState(false);
   const [editando, setEditando] = useState(false);
   const [sobreApp, setSobreApp] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [ayudaOpen, setAyudaOpen] = useState(false);
   const [foto, setFoto] = useState<string | null>(() => localStorage.getItem("fotoPerfil"));
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleGuardarNombre = () => {
-    localStorage.setItem("nombreNegocio", nombreNegocio);
+    localStorage.setItem("nombreNegocio", nombreNegocioEdit);
     setGuardadoNombre(true);
     setTimeout(() => { setGuardadoNombre(false); setEditando(false); onClose(); }, 1200);
   };
@@ -286,6 +356,11 @@ function SidePanel({ user, onClose, setScreen, inventario }: { user: any; onClos
     onClose();
   };
 
+  const handleExportar = () => {
+    exportarCSV(ventas, gastos, nombreNegocio);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-40" onClick={onClose}>
       <div className="absolute top-0 left-0 h-full w-72 bg-slate-900 flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -314,7 +389,7 @@ function SidePanel({ user, onClose, setScreen, inventario }: { user: any; onClos
           <MenuItem icon={Store} label="Nombre del negocio" sublabel={localStorage.getItem("nombreNegocio") || "Sin nombre"} onClick={() => setEditando(!editando)} expanded={editando}>
             {editando && (
               <div className="px-3 pb-3">
-                <input value={nombreNegocio} onChange={(e) => setNombreNegocio(e.target.value)}
+                <input value={nombreNegocioEdit} onChange={(e) => setNombreNegocioEdit(e.target.value)}
                   className="w-full bg-slate-800 text-white p-2 rounded-lg text-sm outline-none mb-2 border border-slate-700/50" placeholder="Nombre de tu negocio" />
                 <button onClick={handleGuardarNombre}
                   className={`w-full p-2 rounded-lg text-sm font-medium ${guardadoNombre ? "bg-green-600" : "bg-green-500"} text-white`}>
@@ -323,19 +398,30 @@ function SidePanel({ user, onClose, setScreen, inventario }: { user: any; onClos
               </div>
             )}
           </MenuItem>
+
           <MenuItem icon={Bell} label="Notificaciones" sublabel="Recordatorios diarios" onClick={() => setNotifOpen(!notifOpen)} expanded={notifOpen}>
             {notifOpen && <NotificacionesPanel />}
           </MenuItem>
+
+          <MenuItem icon={Package} label="Inventario" sublabel={`${inventario?.length || 0} productos`} onClick={() => { setScreen("inventario"); onClose(); }} />
+
+          <MenuItem icon={Download} label="Exportar datos" sublabel="Descargar ventas y gastos" onClick={handleExportar} />
+
           <MenuItem icon={Info} label="Acerca de la app" onClick={() => setSobreApp(!sobreApp)} expanded={sobreApp}>
             {sobreApp && (
               <div className="mx-3 mb-2 p-3 bg-slate-800 rounded-xl">
                 <p className="text-white text-xs font-medium mb-1">StartSmart v1.0</p>
-                <p className="text-slate-400 text-xs leading-relaxed">App para emprendedores que quieren controlar sus finanzas y crecer con ayuda de IA.</p>
+                <p className="text-slate-400 text-xs leading-relaxed">Hecha para emprendedores como tú. Registra, analiza y crece con inteligencia artificial.</p>
               </div>
             )}
           </MenuItem>
-          <MenuItem icon={Package} label="Inventario" sublabel={`${inventario?.length || 0} productos`} onClick={() => { setScreen("inventario"); onClose(); }} />
-          <MenuItem icon={HelpCircle} label="Ayuda" onClick={() => {}} />
+
+          <MenuItem icon={Share2} label="Compartir app" onClick={handleCompartir} />
+
+          <MenuItem icon={HelpCircle} label="Ayuda" sublabel="Preguntas frecuentes" onClick={() => setAyudaOpen(!ayudaOpen)} expanded={ayudaOpen}>
+            {ayudaOpen && <AyudaPanel />}
+          </MenuItem>
+
           <div className="border-t border-slate-800 my-3" />
           <MenuItem icon={LogOut} label="Cerrar sesión" onClick={handleCerrarSesion} danger />
         </div>
@@ -374,7 +460,6 @@ export default function App() {
   const [movPrecio, setMovPrecio] = useState("");
   const [modal, setModal] = useState<ModalConfig | null>(null);
 
-  // Inventario form
   const [invNombre, setInvNombre] = useState("");
   const [invStock, setInvStock] = useState("");
   const [invPrecio, setInvPrecio] = useState("");
@@ -506,7 +591,6 @@ export default function App() {
 
   async function crearHistorial() {
     if (!nuevoHistorial) { alert("Escribe nombre"); return; }
-    alert("user.id: " + user?.id);
     const { error } = await supabase.from("historiales_personalizados").insert({ user_id: user.id, nombre: nuevoHistorial, movimientos: [] });
     if (error) { alert("Error: " + error.message); return; }
     await cargarHistoriales();
@@ -536,11 +620,8 @@ export default function App() {
   async function agregarProducto() {
     if (!invNombre || !invStock) { alert("Debes llenar nombre y stock"); return; }
     await supabase.from("inventario").insert({
-      user_id: user.id,
-      nombre: invNombre,
-      stock: Number(invStock),
-      precio: invPrecio ? Number(invPrecio) : null,
-      alerta_stock: invAlerta ? Number(invAlerta) : 5,
+      user_id: user.id, nombre: invNombre, stock: Number(invStock),
+      precio: invPrecio ? Number(invPrecio) : null, alerta_stock: invAlerta ? Number(invAlerta) : 5,
     });
     await cargarInventario();
     setInvNombre(""); setInvStock(""); setInvPrecio(""); setInvAlerta("5");
@@ -613,6 +694,7 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
   const ventasHoy = ventas.filter(v => v.fecha === hoy).reduce((acc, v) => acc + v.precio, 0);
   const productosStockBajo = inventario.filter(p => p.stock <= (p.alerta_stock || 5));
 
+  // ─── Gráfica área degradada ───────────────────────────
   const finanzasPorDia = historialGeneral.reduce((acc: any, mov) => {
     const existe = acc.find((d: any) => d.fecha === mov.fecha);
     if (existe) {
@@ -623,6 +705,40 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
     }
     return acc;
   }, []);
+
+  // ─── Reporte mensual ──────────────────────────────────
+  const mesActual = new Date().getMonth() + 1;
+  const anioActual = new Date().getFullYear();
+  const mesAnterior = mesActual === 1 ? 12 : mesActual - 1;
+  const anioAnterior = mesActual === 1 ? anioActual - 1 : anioActual;
+
+  function getDatosMes(mes: number, anio: number) {
+    const formato = new Intl.DateTimeFormat("es-MX");
+    const v = ventas.filter(x => {
+      const d = new Date(x.fecha);
+      return d.getMonth() + 1 === mes && d.getFullYear() === anio;
+    });
+    const g = gastos.filter(x => {
+      const d = new Date(x.fecha);
+      return d.getMonth() + 1 === mes && d.getFullYear() === anio;
+    });
+    const totalV = v.reduce((a, x) => a + x.precio, 0);
+    const totalG = g.reduce((a, x) => a + x.precio, 0);
+    const porDia: Record<string, number> = {};
+    v.forEach(x => { porDia[x.fecha] = (porDia[x.fecha] || 0) + x.precio; });
+    const mejorDia = Object.entries(porDia).sort((a, b) => b[1] - a[1])[0];
+    const porProd: Record<string, number> = {};
+    v.forEach(x => { porProd[x.nombre] = (porProd[x.nombre] || 0) + 1; });
+    const prodTop = Object.entries(porProd).sort((a, b) => b[1] - a[1])[0];
+    return { totalV, totalG, ganancia: totalV - totalG, numVentas: v.length, mejorDia, prodTop };
+  }
+
+  const datosActual = getDatosMes(mesActual, anioActual);
+  const datosAnterior = getDatosMes(mesAnterior, anioAnterior);
+  const cambioGanancia = datosAnterior.ganancia > 0
+    ? ((datosActual.ganancia - datosAnterior.ganancia) / datosAnterior.ganancia * 100).toFixed(1)
+    : "0";
+  const subioGanancia = datosActual.ganancia >= datosAnterior.ganancia;
 
   if (loading) return <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">Cargando...</div>;
 
@@ -656,7 +772,17 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
       )}
 
       {modal && <ModalConfirm config={modal} onClose={() => setModal(null)} />}
-      {panelOpen && <SidePanel user={user} onClose={() => setPanelOpen(false)} setScreen={setScreen} inventario={inventario} />}
+      {panelOpen && (
+        <SidePanel
+          user={user}
+          onClose={() => setPanelOpen(false)}
+          setScreen={setScreen}
+          inventario={inventario}
+          ventas={ventas}
+          gastos={gastos}
+          nombreNegocio={nombreNegocio}
+        />
+      )}
 
       <header className="p-4 border-b border-slate-800 flex items-center gap-3">
         {fotoPerfil && (
@@ -666,9 +792,7 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
         )}
         <h1 className="text-xl font-bold text-green-400 cursor-pointer select-none" onClick={() => setPanelOpen(true)}>{nombreNegocio}</h1>
         {productosStockBajo.length > 0 && (
-          <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-            ⚠️ {productosStockBajo.length} stock bajo
-          </span>
+          <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">⚠️ {productosStockBajo.length} stock bajo</span>
         )}
       </header>
 
@@ -684,6 +808,7 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
               <div className="bg-slate-900 p-5 rounded-xl"><p className="text-slate-400 text-sm">Gastos</p><h3 className="text-xl font-bold">${totalGastos}</h3></div>
               <div className="bg-slate-900 p-5 rounded-xl col-span-2"><p className="text-slate-400 text-sm">Ganancia</p><h3 className="text-xl font-bold text-green-400">${ganancia}</h3></div>
             </div>
+
             {productosStockBajo.length > 0 && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mt-4">
                 <p className="text-red-400 text-sm font-medium mb-2">⚠️ Stock bajo</p>
@@ -692,16 +817,106 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
                 ))}
               </div>
             )}
-            <div className="bg-slate-900 p-5 rounded-xl mt-6">
-              <p className="text-slate-400 mb-3">Ventas vs Gastos por día</p>
-              <div style={{ width: "100%", height: 250 }}>
+
+            {/* Gráfica área degradada */}
+            <div className="bg-slate-900 p-5 rounded-xl mt-4">
+              <div className="flex items-center gap-4 mb-3">
+                <p className="text-slate-400 text-sm">Ventas vs Gastos</p>
+                <div className="flex items-center gap-3 ml-auto">
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500" /><span className="text-xs text-slate-400">Ventas</span></div>
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500" /><span className="text-xs text-slate-400">Gastos</span></div>
+                </div>
+              </div>
+              <div style={{ width: "100%", height: 200 }}>
                 <ResponsiveContainer>
-                  <LineChart data={finanzasPorDia}>
-                    <XAxis dataKey="fecha" /><YAxis /><Tooltip />
-                    <Line type="monotone" dataKey="ventas" stroke="#22c55e" strokeWidth={3} />
-                    <Line type="monotone" dataKey="gastos" stroke="#ef4444" strokeWidth={3} />
-                  </LineChart>
+                  <AreaChart data={finanzasPorDia}>
+                    <defs>
+                      <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="gg" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="fecha" tick={{ fill: "#475569", fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis hide />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area type="monotone" dataKey="ventas" stroke="#22C55E" strokeWidth={2} fill="url(#gv)" />
+                    <Area type="monotone" dataKey="gastos" stroke="#EF4444" strokeWidth={2} fill="url(#gg)" />
+                  </AreaChart>
                 </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Reporte del mes */}
+            <div className="mt-6 pt-6 border-t border-slate-800">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-lg">📊</span>
+                <h2 className="text-lg font-bold">Reporte de {MESES[mesActual]}</h2>
+              </div>
+
+              <div className={`rounded-xl p-4 mb-3 text-center ${subioGanancia ? "bg-green-500/10 border border-green-500/20" : "bg-red-500/10 border border-red-500/20"}`}>
+                <p className="text-slate-400 text-xs mb-1">Ganancia del mes</p>
+                <h3 className={`text-3xl font-black mb-2 ${subioGanancia ? "text-green-400" : "text-red-400"}`}>${datosActual.ganancia.toLocaleString()}</h3>
+                <span className={`text-xs font-semibold px-3 py-1 rounded-full ${subioGanancia ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
+                  {subioGanancia ? "↑" : "↓"} {Math.abs(Number(cambioGanancia))}% vs {MESES[mesAnterior]}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="bg-slate-900 rounded-xl p-3">
+                  <p className="text-slate-500 text-xs mb-1">Ventas del mes</p>
+                  <p className="text-green-400 font-bold text-lg">${datosActual.totalV.toLocaleString()}</p>
+                  <p className="text-slate-600 text-xs">{datosActual.numVentas} transacciones</p>
+                </div>
+                <div className="bg-slate-900 rounded-xl p-3">
+                  <p className="text-slate-500 text-xs mb-1">Gastos del mes</p>
+                  <p className="text-red-400 font-bold text-lg">${datosActual.totalG.toLocaleString()}</p>
+                  {datosActual.totalV > 0 && <p className="text-slate-600 text-xs">{((datosActual.totalG / datosActual.totalV) * 100).toFixed(0)}% de margen</p>}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                {datosActual.mejorDia && (
+                  <div className="bg-slate-900 rounded-xl p-3">
+                    <p className="text-slate-500 text-xs mb-1">🏆 Mejor día</p>
+                    <p className="text-white text-xs font-medium">{datosActual.mejorDia[0]}</p>
+                    <p className="text-green-400 text-xs">${datosActual.mejorDia[1].toLocaleString()}</p>
+                  </div>
+                )}
+                {datosActual.prodTop && (
+                  <div className="bg-slate-900 rounded-xl p-3">
+                    <p className="text-slate-500 text-xs mb-1">⭐ Más vendido</p>
+                    <p className="text-white text-xs font-medium">{datosActual.prodTop[0]}</p>
+                    <p className="text-slate-500 text-xs">{datosActual.prodTop[1]}x este mes</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-slate-900 rounded-xl p-3">
+                <p className="text-slate-500 text-xs mb-2 uppercase tracking-wider">vs {MESES[mesAnterior]}</p>
+                {[
+                  { label: "Ventas", a: datosActual.totalV, ant: datosAnterior.totalV },
+                  { label: "Gastos", a: datosActual.totalG, ant: datosAnterior.totalG },
+                  { label: "Ganancia", a: datosActual.ganancia, ant: datosAnterior.ganancia },
+                ].map(({ label, a, ant }) => {
+                  const diff = a - ant;
+                  const pct = ant > 0 ? ((diff / ant) * 100).toFixed(0) : "0";
+                  const positivo = label === "Gastos" ? diff < 0 : diff > 0;
+                  return (
+                    <div key={label} className="flex justify-between items-center mb-2">
+                      <span className="text-slate-400 text-sm">{label}</span>
+                      <div>
+                        <span className="text-white text-sm font-semibold">${a.toLocaleString()}</span>
+                        <span className={`text-xs ml-2 ${positivo ? "text-green-400" : "text-red-400"}`}>
+                          {diff > 0 ? "+" : ""}{pct}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -786,7 +1001,6 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
             </div>
             <input placeholder="Alerta cuando stock sea menor a (default: 5)" value={invAlerta} onChange={(e) => setInvAlerta(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800" />
             <button onClick={agregarProducto} className="bg-orange-500 p-3 rounded w-full mb-6">Agregar producto</button>
-
             {inventario.map((p) => (
               <div key={p.id} className={`p-3 rounded mb-2 ${p.stock <= (p.alerta_stock || 5) ? "bg-red-500/10 border border-red-500/20" : "bg-slate-900"}`}>
                 <div className="flex justify-between items-center mb-2">
@@ -854,10 +1068,10 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 text-xs">
-        <button onClick={() => setScreen("inicio")} className={screen === "inicio" ? "text-green-400" : "text-slate-400"}>Inicio</button>
-        <button onClick={() => setScreen("ventas")} className={screen === "ventas" ? "text-green-400" : "text-slate-400"}>Ventas</button>
-        <button onClick={() => setScreen("finanzas")} className={screen === "finanzas" ? "text-green-400" : "text-slate-400"}>Gastos</button>
-        <button onClick={() => setScreen("historial")} className={screen === "historial" ? "text-green-400" : "text-slate-400"}>Historial</button>
+        <button onClick={() => setScreen("inicio")} className={screen === "inicio" ? "text-green-400 font-semibold" : "text-slate-400"}>Inicio</button>
+        <button onClick={() => setScreen("ventas")} className={screen === "ventas" ? "text-green-400 font-semibold" : "text-slate-400"}>Ventas</button>
+        <button onClick={() => setScreen("finanzas")} className={screen === "finanzas" ? "text-green-400 font-semibold" : "text-slate-400"}>Gastos</button>
+        <button onClick={() => setScreen("historial")} className={screen === "historial" ? "text-green-400 font-semibold" : "text-slate-400"}>Historial</button>
         <button onClick={() => setScreen("asistente")} className={screen === "asistente" ? "text-purple-400 font-semibold" : "text-slate-400"}>IA ✦</button>
       </nav>
     </div>
