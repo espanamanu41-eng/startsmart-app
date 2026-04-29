@@ -506,7 +506,8 @@ export default function App() {
 
   async function crearHistorial() {
     if (!nuevoHistorial) { alert("Escribe nombre"); return; }
-    await supabase.from("historiales_personalizados").insert({ user_id: user.id, nombre: nuevoHistorial, movimientos: [] });
+    const { error } = await supabase.from("historiales_personalizados").insert({ user_id: user.id, nombre: nuevoHistorial, movimientos: [] });
+    if (error) { alert("Error: " + error.message); return; }
     await cargarHistoriales();
     setNuevoHistorial("");
   }
