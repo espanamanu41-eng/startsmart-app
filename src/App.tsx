@@ -33,7 +33,7 @@ const MSGS_MANANA = [
 ];
 const MSGS_MEDIO = [
   "¿Ya registraste tus ventas de esta mañana? 📊",
-  "Mitad del día — ¿cómo van las ventas? Anótalas 📝",
+  "Mitad del día — ¿cómo van las ventas? Anótalas 📝", 
   "¡No dejes para después! Registra tus movimientos 💰",
   "Un negocio ordenado es un negocio exitoso. ¡Anota! ✍️",
 ];
