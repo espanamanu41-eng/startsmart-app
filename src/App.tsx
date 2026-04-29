@@ -53,6 +53,26 @@ function calcCierreNotif(cierre: string) {
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
+const VAPID_PUBLIC_KEY = "BJRvbwSKnhHjgUFPx3WHa0pYe0WGDOjw4OFmwlJxqluJPe8ZqnRssNFLsohFcOXoklUANZW0bIEE5bPfLUlGdgo";
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
+async function suscribirPush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return null;
+  const reg = await navigator.serviceWorker.ready;
+  const existing = await reg.pushManager.getSubscription();
+  if (existing) return existing;
+  return await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+  });
+}
+
 function ModalConfirm({ config, onClose }: { config: ModalConfig; onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-6">
