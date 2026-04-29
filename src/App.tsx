@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { createClient } from "@supabase/supabase-js";
-import { Store, Info, Share2, Bell, HelpCircle, LogOut, ChevronDown, ChevronUp, Plus, Check } from "lucide-react";
+import { Store, Info, Share2, Bell, HelpCircle, LogOut, ChevronDown, ChevronUp, Plus, Check, Package } from "lucide-react";
 
 const supabase = createClient(
   "https://ivfqtuspgxnubwvuubyk.supabase.co",
@@ -10,11 +10,12 @@ const supabase = createClient(
 
 const VAPID_PUBLIC_KEY = "BJRvbwSKnhHjgUFPx3WHa0pYe0WGDOjw4OFmwlJxqluJPe8ZqnRssNFLsohFcOXoklUANZW0bIEE5bPfLUlGdgo";
 
-type Screen = "inicio" | "ventas" | "finanzas" | "historial" | "asistente";
+type Screen = "inicio" | "ventas" | "finanzas" | "historial" | "inventario" | "asistente";
 type Movimiento = { id?: string; nombre: string; precio: number; fecha: string; tipo?: "venta" | "gasto" };
-type HistorialFijo = { nombre: string; movimientos: Movimiento[] };
+type HistorialFijo = { id?: string; nombre: string; movimientos: Movimiento[] };
 type Mensaje = { rol: "user" | "assistant"; texto: string };
 type ModalConfig = { mensaje: string; onConfirm: () => void };
+type Producto = { id?: string; nombre: string; stock: number; precio?: number; alerta_stock?: number };
 
 const DIAS_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const HORARIOS_DEFAULT = DIAS_LABELS.map((_, i) => ({
@@ -73,7 +74,6 @@ async function suscribirPush() {
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     });
   } catch (e) {
-    console.error("Error suscribiendo push:", e);
     return null;
   }
 }
@@ -140,12 +140,11 @@ function NotificacionesPanel() {
         const sub = await suscribirPush();
         if (sub) {
           const { data: { user } } = await supabase.auth.getUser();
-          const res = await fetch("/api/notify", {
+          await fetch("/api/notify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ subscription: sub.toJSON(), user_id: user?.id, horarios }),
           });
-          if (!res.ok) throw new Error("Error al guardar");
         }
         setGuardado(true);
         setTimeout(() => { setGuardado(false); setDiaSeleccionado(null); }, 2000);
@@ -165,17 +164,12 @@ function NotificacionesPanel() {
         <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">Toca un día para configurarlo</p>
         <div className="flex gap-1">
           {DIAS_LABELS.map((dia, idx) => (
-            <button
-              key={dia}
-              onClick={() => setDiaSeleccionado(diaSeleccionado === idx ? null : idx)}
+            <button key={dia} onClick={() => setDiaSeleccionado(diaSeleccionado === idx ? null : idx)}
               className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all ${
                 !horarios[idx].activo ? "bg-slate-800 text-slate-600 line-through"
                 : diaSeleccionado === idx ? "bg-green-500 text-white"
                 : "bg-green-500/20 text-green-400"
-              }`}
-            >
-              {dia}
-            </button>
+              }`}>{dia}</button>
           ))}
         </div>
       </div>
@@ -184,10 +178,8 @@ function NotificacionesPanel() {
         <div className="bg-slate-800 rounded-2xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-white font-medium text-sm">{DIAS_LABELS[diaSeleccionado]}</p>
-            <button
-              onClick={() => toggleDia(diaSeleccionado)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${horarios[diaSeleccionado].activo ? "bg-red-500/20 text-red-400" : "bg-green-500/20 text-green-400"}`}
-            >
+            <button onClick={() => toggleDia(diaSeleccionado)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium ${horarios[diaSeleccionado].activo ? "bg-red-500/20 text-red-400" : "bg-green-500/20 text-green-400"}`}>
               {horarios[diaSeleccionado].activo ? "Marcar cerrado" : "Marcar abierto"}
             </button>
           </div>
@@ -244,7 +236,7 @@ function NotificacionesPanel() {
       </div>
 
       <button onClick={handleGuardar} disabled={cargando}
-        className={`w-full p-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${guardado ? "bg-green-600" : "bg-green-500"} text-white disabled:opacity-50`}>
+        className={`w-full p-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 ${guardado ? "bg-green-600" : "bg-green-500"} text-white disabled:opacity-50`}>
         {cargando ? "Guardando..." : guardado ? <><Check size={14} /> Activado</> : "Activar notificaciones"}
       </button>
     </div>
@@ -300,14 +292,10 @@ function SidePanel({ user, onClose }: { user: any; onClose: () => void }) {
         <div className="p-6 pt-12 border-b border-slate-800">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div
-                className="w-14 h-14 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 font-bold text-2xl cursor-pointer overflow-hidden border-2 border-green-500/30"
-                onClick={() => fileRef.current?.click()}
-              >
-                {foto
-                  ? <img src={foto} className="w-full h-full object-cover" alt="perfil" />
-                  : <span>{(localStorage.getItem("nombreNegocio") || user?.email || "U")[0].toUpperCase()}</span>
-                }
+              <div className="w-14 h-14 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 font-bold text-2xl cursor-pointer overflow-hidden border-2 border-green-500/30"
+                onClick={() => fileRef.current?.click()}>
+                {foto ? <img src={foto} className="w-full h-full object-cover" alt="perfil" />
+                  : <span>{(localStorage.getItem("nombreNegocio") || user?.email || "U")[0].toUpperCase()}</span>}
               </div>
               <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center cursor-pointer" onClick={() => fileRef.current?.click()}>
                 <Plus size={10} className="text-white" />
@@ -335,11 +323,9 @@ function SidePanel({ user, onClose }: { user: any; onClose: () => void }) {
               </div>
             )}
           </MenuItem>
-
           <MenuItem icon={Bell} label="Notificaciones" sublabel="Recordatorios diarios" onClick={() => setNotifOpen(!notifOpen)} expanded={notifOpen}>
             {notifOpen && <NotificacionesPanel />}
           </MenuItem>
-
           <MenuItem icon={Info} label="Acerca de la app" onClick={() => setSobreApp(!sobreApp)} expanded={sobreApp}>
             {sobreApp && (
               <div className="mx-3 mb-2 p-3 bg-slate-800 rounded-xl">
@@ -348,13 +334,11 @@ function SidePanel({ user, onClose }: { user: any; onClose: () => void }) {
               </div>
             )}
           </MenuItem>
-
           <MenuItem icon={Share2} label="Compartir app" onClick={handleCompartir} />
           <MenuItem icon={HelpCircle} label="Ayuda" onClick={() => {}} />
           <div className="border-t border-slate-800 my-3" />
           <MenuItem icon={LogOut} label="Cerrar sesión" onClick={handleCerrarSesion} danger />
         </div>
-
         <div className="p-4 border-t border-slate-800">
           <p className="text-slate-600 text-xs text-center">StartSmart v1.0</p>
         </div>
@@ -370,7 +354,6 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [isRegister, setIsRegister] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [sessionVerified, setSessionVerified] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [nombreNegocio, setNombreNegocio] = useState(() => localStorage.getItem("nombreNegocio") || "StartSmart");
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(() => localStorage.getItem("fotoPerfil"));
@@ -378,10 +361,8 @@ export default function App() {
 
   const [ventas, setVentas] = useState<Movimiento[]>([]);
   const [gastos, setGastos] = useState<Movimiento[]>([]);
-  const [historialesFijos, setHistorialesFijos] = useState<HistorialFijo[]>(() => {
-    const data = localStorage.getItem("historialesFijos");
-    return data ? JSON.parse(data) : [];
-  });
+  const [historialesFijos, setHistorialesFijos] = useState<HistorialFijo[]>([]);
+  const [inventario, setInventario] = useState<Producto[]>([]);
 
   const [producto, setProducto] = useState("");
   const [precio, setPrecio] = useState("");
@@ -392,6 +373,12 @@ export default function App() {
   const [movNombre, setMovNombre] = useState("");
   const [movPrecio, setMovPrecio] = useState("");
   const [modal, setModal] = useState<ModalConfig | null>(null);
+
+  // Inventario form
+  const [invNombre, setInvNombre] = useState("");
+  const [invStock, setInvStock] = useState("");
+  const [invPrecio, setInvPrecio] = useState("");
+  const [invAlerta, setInvAlerta] = useState("5");
 
   const [mensajes, setMensajes] = useState<Mensaje[]>([
     { rol: "assistant", texto: "¡Hola! Soy tu asistente de negocios. Puedo analizar tus finanzas, darte consejos para aumentar ventas o responder preguntas sobre tu emprendimiento. ¿En qué te ayudo hoy?" },
@@ -409,7 +396,6 @@ export default function App() {
     }
   }, [panelOpen]);
 
-  // Update prompt PWA
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.getRegistration().then((reg) => {
@@ -438,7 +424,6 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Session timeout — cerrar sesión al abrir la app
   useEffect(() => {
     if (user && !sessionStorage.getItem("sessionVerified")) {
       supabase.auth.signOut();
@@ -446,8 +431,14 @@ export default function App() {
     }
   }, [user]);
 
-  useEffect(() => { if (user) { cargarVentas(); cargarGastos(); } }, [user]);
-  useEffect(() => { localStorage.setItem("historialesFijos", JSON.stringify(historialesFijos)); }, [historialesFijos]);
+  useEffect(() => {
+    if (user) {
+      cargarVentas();
+      cargarGastos();
+      cargarHistoriales();
+      cargarInventario();
+    }
+  }, [user]);
 
   const mostrarModal = (mensaje: string, onConfirm: () => void) => setModal({ mensaje, onConfirm });
 
@@ -461,7 +452,6 @@ export default function App() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        // Marcar sesión verificada en esta apertura
         sessionStorage.setItem("sessionVerified", "true");
       }
     } catch (error: any) { alert(error.message); }
@@ -475,6 +465,16 @@ export default function App() {
   async function cargarGastos() {
     const { data } = await supabase.from("gastos").select("*").eq("user_id", user.id);
     if (data) setGastos(data);
+  }
+
+  async function cargarHistoriales() {
+    const { data } = await supabase.from("historiales_personalizados").select("*").eq("user_id", user.id);
+    if (data) setHistorialesFijos(data.map(h => ({ ...h, movimientos: h.movimientos || [] })));
+  }
+
+  async function cargarInventario() {
+    const { data } = await supabase.from("inventario").select("*").eq("user_id", user.id);
+    if (data) setInventario(data);
   }
 
   async function agregarVenta() {
@@ -507,26 +507,56 @@ export default function App() {
     });
   }
 
-  function crearHistorial() {
+  async function crearHistorial() {
     if (!nuevoHistorial) { alert("Escribe nombre"); return; }
-    setHistorialesFijos([...historialesFijos, { nombre: nuevoHistorial, movimientos: [] }]);
+    await supabase.from("historiales_personalizados").insert({ user_id: user.id, nombre: nuevoHistorial, movimientos: [] });
+    await cargarHistoriales();
     setNuevoHistorial("");
   }
 
-  function agregarMovimientoHistorial() {
+  async function agregarMovimientoHistorial() {
     if (historialActivo === null) return;
     if (!movNombre || !movPrecio) { alert("Completa los datos"); return; }
-    const copia = [...historialesFijos];
-    copia[historialActivo].movimientos.push({ nombre: movNombre, precio: Number(movPrecio), fecha: new Date().toLocaleDateString() });
-    setHistorialesFijos(copia);
+    const h = historialesFijos[historialActivo];
+    const nuevosMovimientos = [...h.movimientos, { nombre: movNombre, precio: Number(movPrecio), fecha: new Date().toLocaleDateString() }];
+    await supabase.from("historiales_personalizados").update({ movimientos: nuevosMovimientos }).eq("id", h.id);
+    await cargarHistoriales();
     setMovNombre(""); setMovPrecio("");
   }
 
-  function borrarMovimientoHistorial(index: number) {
-    mostrarModal("¿Eliminar este movimiento?", () => {
-      const copia = [...historialesFijos];
-      copia[historialActivo!].movimientos = copia[historialActivo!].movimientos.filter((_, i) => i !== index);
-      setHistorialesFijos(copia);
+  async function borrarMovimientoHistorial(index: number) {
+    if (historialActivo === null) return;
+    mostrarModal("¿Eliminar este movimiento?", async () => {
+      const h = historialesFijos[historialActivo];
+      const nuevosMovimientos = h.movimientos.filter((_, i) => i !== index);
+      await supabase.from("historiales_personalizados").update({ movimientos: nuevosMovimientos }).eq("id", h.id);
+      await cargarHistoriales();
+    });
+  }
+
+  async function agregarProducto() {
+    if (!invNombre || !invStock) { alert("Debes llenar nombre y stock"); return; }
+    await supabase.from("inventario").insert({
+      user_id: user.id,
+      nombre: invNombre,
+      stock: Number(invStock),
+      precio: invPrecio ? Number(invPrecio) : null,
+      alerta_stock: invAlerta ? Number(invAlerta) : 5,
+    });
+    await cargarInventario();
+    setInvNombre(""); setInvStock(""); setInvPrecio(""); setInvAlerta("5");
+  }
+
+  async function actualizarStock(id: string, delta: number, stockActual: number) {
+    const nuevoStock = Math.max(0, stockActual + delta);
+    await supabase.from("inventario").update({ stock: nuevoStock }).eq("id", id);
+    await cargarInventario();
+  }
+
+  async function borrarProducto(id: string) {
+    mostrarModal("¿Eliminar este producto?", async () => {
+      await supabase.from("inventario").delete().eq("id", id);
+      await cargarInventario();
     });
   }
 
@@ -544,6 +574,8 @@ El negocio del usuario tiene estos datos actuales:
 - Total ingresos: $${totalVentas}
 - Total gastos: $${totalGastos}
 - Ganancia neta: $${ganancia}
+- Productos en inventario: ${inventario.length}
+- Productos con stock bajo: ${inventario.filter(p => p.stock <= (p.alerta_stock || 5)).length}
 Da consejos prácticos, concretos y motivadores. Responde siempre en español. Sé conciso (máximo 3 párrafos).`;
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -580,6 +612,7 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
   const ganancia = totalVentas - totalGastos;
   const hoy = new Date().toLocaleDateString();
   const ventasHoy = ventas.filter(v => v.fecha === hoy).reduce((acc, v) => acc + v.precio, 0);
+  const productosStockBajo = inventario.filter(p => p.stock <= (p.alerta_stock || 5));
 
   const finanzasPorDia = historialGeneral.reduce((acc: any, mov) => {
     const existe = acc.find((d: any) => d.fecha === mov.fecha);
@@ -618,17 +651,8 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
       {hayActualizacion && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-green-500 text-white text-sm p-3 flex justify-between items-center">
           <span>🆕 Nueva versión disponible</span>
-          <button
-            onClick={() => {
-              navigator.serviceWorker.getRegistration().then((reg) => {
-                reg?.waiting?.postMessage("SKIP_WAITING");
-                window.location.reload();
-              });
-            }}
-            className="bg-white text-green-600 font-bold px-3 py-1 rounded-lg text-xs"
-          >
-            Actualizar
-          </button>
+          <button onClick={() => { navigator.serviceWorker.getRegistration().then((reg) => { reg?.waiting?.postMessage("SKIP_WAITING"); window.location.reload(); }); }}
+            className="bg-white text-green-600 font-bold px-3 py-1 rounded-lg text-xs">Actualizar</button>
         </div>
       )}
 
@@ -641,9 +665,12 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
             <img src={fotoPerfil} className="w-full h-full object-cover" alt="perfil" />
           </div>
         )}
-        <h1 className="text-xl font-bold text-green-400 cursor-pointer select-none" onClick={() => setPanelOpen(true)}>
-          {nombreNegocio}
-        </h1>
+        <h1 className="text-xl font-bold text-green-400 cursor-pointer select-none" onClick={() => setPanelOpen(true)}>{nombreNegocio}</h1>
+        {productosStockBajo.length > 0 && (
+          <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+            ⚠️ {productosStockBajo.length} stock bajo
+          </span>
+        )}
       </header>
 
       <main className="flex-1 p-5 pb-24">
@@ -658,6 +685,14 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
               <div className="bg-slate-900 p-5 rounded-xl"><p className="text-slate-400 text-sm">Gastos</p><h3 className="text-xl font-bold">${totalGastos}</h3></div>
               <div className="bg-slate-900 p-5 rounded-xl col-span-2"><p className="text-slate-400 text-sm">Ganancia</p><h3 className="text-xl font-bold text-green-400">${ganancia}</h3></div>
             </div>
+            {productosStockBajo.length > 0 && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mt-4">
+                <p className="text-red-400 text-sm font-medium mb-2">⚠️ Stock bajo</p>
+                {productosStockBajo.map((p, i) => (
+                  <p key={i} className="text-slate-300 text-xs">{p.nombre} — {p.stock} unidades</p>
+                ))}
+              </div>
+            )}
             <div className="bg-slate-900 p-5 rounded-xl mt-6">
               <p className="text-slate-400 mb-3">Ventas vs Gastos por día</p>
               <div style={{ width: "100%", height: 250 }}>
@@ -742,6 +777,38 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
           </div>
         )}
 
+        {screen === "inventario" && (
+          <div>
+            <h2 className="text-2xl font-bold mb-6 text-orange-400">Inventario</h2>
+            <input placeholder="Nombre del producto" value={invNombre} onChange={(e) => setInvNombre(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800" />
+            <div className="flex gap-2 mb-3">
+              <input placeholder="Stock" value={invStock} onChange={(e) => setInvStock(e.target.value)} className="flex-1 p-3 rounded bg-slate-800" />
+              <input placeholder="Precio" value={invPrecio} onChange={(e) => setInvPrecio(e.target.value)} className="flex-1 p-3 rounded bg-slate-800" />
+            </div>
+            <input placeholder="Alerta cuando stock sea menor a (default: 5)" value={invAlerta} onChange={(e) => setInvAlerta(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800" />
+            <button onClick={agregarProducto} className="bg-orange-500 p-3 rounded w-full mb-6">Agregar producto</button>
+
+            {inventario.map((p) => (
+              <div key={p.id} className={`p-3 rounded mb-2 ${p.stock <= (p.alerta_stock || 5) ? "bg-red-500/10 border border-red-500/20" : "bg-slate-900"}`}>
+                <div className="flex justify-between items-center mb-2">
+                  <div>
+                    <span className="font-medium">{p.nombre}</span>
+                    {p.precio && <span className="text-slate-400 text-xs ml-2">${p.precio}</span>}
+                  </div>
+                  <button onClick={() => borrarProducto(p.id!)} className="text-red-400 text-xs">Eliminar</button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => actualizarStock(p.id!, -1, p.stock)} className="w-8 h-8 rounded-lg bg-slate-800 text-white font-bold">−</button>
+                  <span className={`font-bold text-lg ${p.stock <= (p.alerta_stock || 5) ? "text-red-400" : "text-white"}`}>{p.stock}</span>
+                  <button onClick={() => actualizarStock(p.id!, 1, p.stock)} className="w-8 h-8 rounded-lg bg-slate-800 text-white font-bold">+</button>
+                  <span className="text-slate-500 text-xs ml-1">unidades</span>
+                  {p.stock <= (p.alerta_stock || 5) && <span className="text-red-400 text-xs ml-auto">⚠️ Stock bajo</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {screen === "asistente" && (
           <div className="flex flex-col">
             <h2 className="text-2xl font-bold mb-4 text-purple-400">Asistente IA</h2>
@@ -778,7 +845,7 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
                 className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-4 rounded-xl transition-colors">➤</button>
             </div>
             <div className="flex flex-wrap gap-2 mt-3">
-              {["¿Cómo aumentar mis ventas?", "Analiza mis finanzas", "Consejos para reducir gastos"].map((s) => (
+              {["¿Cómo aumentar mis ventas?", "Analiza mis finanzas", "Revisa mi inventario"].map((s) => (
                 <button key={s} onClick={() => setInputIA(s)} className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded-full transition-colors">{s}</button>
               ))}
             </div>
@@ -787,12 +854,13 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
 
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 text-sm">
-        <button onClick={() => setScreen("inicio")}>Inicio</button>
-        <button onClick={() => setScreen("ventas")}>Ventas</button>
-        <button onClick={() => setScreen("finanzas")}>Gastos</button>
-        <button onClick={() => setScreen("historial")}>Historial</button>
-        <button onClick={() => setScreen("asistente")} className="text-purple-400 font-semibold">IA ✦</button>
+      <nav className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 text-xs">
+        <button onClick={() => setScreen("inicio")} className={screen === "inicio" ? "text-green-400" : "text-slate-400"}>Inicio</button>
+        <button onClick={() => setScreen("ventas")} className={screen === "ventas" ? "text-green-400" : "text-slate-400"}>Ventas</button>
+        <button onClick={() => setScreen("finanzas")} className={screen === "finanzas" ? "text-green-400" : "text-slate-400"}>Gastos</button>
+        <button onClick={() => setScreen("historial")} className={screen === "historial" ? "text-green-400" : "text-slate-400"}>Historial</button>
+        <button onClick={() => setScreen("inventario")} className={screen === "inventario" ? "text-orange-400" : "text-slate-400"}>📦</button>
+        <button onClick={() => setScreen("asistente")} className={screen === "asistente" ? "text-purple-400 font-semibold" : "text-slate-400"}>IA ✦</button>
       </nav>
     </div>
   );
