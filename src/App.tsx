@@ -6,7 +6,7 @@ import { Store, Info, Share2, Bell, HelpCircle, LogOut, ChevronDown, ChevronUp, 
 const supabase = createClient(
   "https://ivfqtuspgxnubwvuubyk.supabase.co",
   "sb_publishable_i7-55XtmSMMv1aistkP-nQ_jqANxYGr"
-);
+); 
 
 const VAPID_PUBLIC_KEY = "BJRvbwSKnhHjgUFPx3WHa0pYe0WGDOjw4OFmwlJxqluJPe8ZqnRssNFLsohFcOXoklUANZW0bIEE5bPfLUlGdgo";
 
