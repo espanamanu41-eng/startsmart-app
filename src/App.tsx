@@ -6,7 +6,7 @@ import { Store, Info, Share2, Bell, HelpCircle, LogOut, ChevronDown, ChevronUp, 
 const supabase = createClient(
   "https://ivfqtuspgxnubwvuubyk.supabase.co",
   "sb_publishable_i7-55XtmSMMv1aistkP-nQ_jqANxYGr"
-); 
+);
 
 const VAPID_PUBLIC_KEY = "BJRvbwSKnhHjgUFPx3WHa0pYe0WGDOjw4OFmwlJxqluJPe8ZqnRssNFLsohFcOXoklUANZW0bIEE5bPfLUlGdgo";
 
@@ -21,8 +21,8 @@ const DIAS_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const HORARIOS_DEFAULT = DIAS_LABELS.map((_, i) => ({
   activo: i < 5,
   apertura: i < 5 ? "09:00" : "10:00",
-  cierre: i < 5 ? "19:00" : "15:00", 
-})); 
+  cierre: i < 5 ? "19:00" : "15:00",
+}));
 
 const MSGS_MANANA = [
   "¡Nuevo día, nueva oportunidad de vender! 🚀",
@@ -33,7 +33,7 @@ const MSGS_MANANA = [
 ];
 const MSGS_MEDIO = [
   "¿Ya registraste tus ventas de esta mañana? 📊",
-  "Mitad del día — ¿cómo van las ventas? Anótalas 📝", 
+  "Mitad del día — ¿cómo van las ventas? Anótalas 📝",
   "¡No dejes para después! Registra tus movimientos 💰",
   "Un negocio ordenado es un negocio exitoso. ¡Anota! ✍️",
 ];
@@ -80,6 +80,15 @@ async function suscribirPush() {
   }
 }
 
+// ─── Parsear fecha en formato dd/mm/yyyy ─────────────────
+function parsearFecha(fecha: string): Date {
+  const partes = fecha.split("/");
+  if (partes.length === 3) {
+    return new Date(Number(partes[2]), Number(partes[1]) - 1, Number(partes[0]));
+  }
+  return new Date(fecha);
+}
+
 // ─── Exportar datos como CSV ─────────────────────────────
 function exportarCSV(ventas: Movimiento[], gastos: Movimiento[], nombreNegocio: string) {
   const filas = [
@@ -97,7 +106,6 @@ function exportarCSV(ventas: Movimiento[], gastos: Movimiento[], nombreNegocio: 
   URL.revokeObjectURL(url);
 }
 
-// ─── Tooltip personalizado ────────────────────────────────
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
@@ -176,7 +184,7 @@ function NotificacionesPanel() {
         const sub = await suscribirPush();
         if (sub) {
           const { data: { user } } = await supabase.auth.getUser();
-          await fetch("/api/notify", {
+          await fetch("/.netlify/functions/notify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ subscription: sub.toJSON(), user_id: user?.id, horarios }),
@@ -282,7 +290,8 @@ function NotificacionesPanel() {
 function AyudaPanel() {
   const faqs = [
     { q: "¿Cómo agrego una venta?", a: "Ve a la pantalla Ventas, escribe el nombre del producto y el precio, luego toca Agregar venta." },
-    { q: "¿Cómo funciona el inventario?", a: "Toca el menú lateral → Inventario. Ahí puedes agregar productos con su stock y precio. Te avisará cuando el stock esté bajo." },
+    { q: "¿Cómo funciona el inventario?", a: "Toca el menú lateral → Inventario. Agrega productos con su stock. Usa los botones + y − para ajustar cuando vendas." },
+    { q: "¿Cuándo me avisa de stock bajo?", a: "Cuando el stock de un producto baje del límite que configuraste (default: 5 unidades) aparecerá una alerta roja." },
     { q: "¿Mis datos están seguros?", a: "Sí, todos tus datos se guardan en la nube con tu cuenta. Solo tú puedes verlos." },
     { q: "¿Puedo usar la app en otro celular?", a: "Sí, solo inicia sesión con tu correo y contraseña en cualquier dispositivo." },
     { q: "¿Cómo exporto mis datos?", a: "Toca el menú lateral → Exportar datos. Se descargará un archivo CSV con todas tus ventas y gastos." },
@@ -410,7 +419,7 @@ function SidePanel({ user, onClose, setScreen, inventario, ventas, gastos, nombr
           <MenuItem icon={Info} label="Acerca de la app" onClick={() => setSobreApp(!sobreApp)} expanded={sobreApp}>
             {sobreApp && (
               <div className="mx-3 mb-2 p-3 bg-slate-800 rounded-xl">
-                <p className="text-white text-xs font-medium mb-1">StartSmart v1.0</p>
+                <p className="text-white text-xs font-medium mb-1">StartSmart v1.1</p>
                 <p className="text-slate-400 text-xs leading-relaxed">Hecha para emprendedores como tú. Registra, analiza y crece con inteligencia artificial.</p>
               </div>
             )}
@@ -426,7 +435,7 @@ function SidePanel({ user, onClose, setScreen, inventario, ventas, gastos, nombr
           <MenuItem icon={LogOut} label="Cerrar sesión" onClick={handleCerrarSesion} danger />
         </div>
         <div className="p-4 border-t border-slate-800">
-          <p className="text-slate-600 text-xs text-center">StartSmart v1.0</p>
+          <p className="text-slate-600 text-xs text-center">StartSmart v1.1</p>
         </div>
       </div>
     </div>
@@ -537,6 +546,13 @@ export default function App() {
         sessionStorage.setItem("sessionVerified", "true");
       }
     } catch (error: any) { alert(error.message); }
+  }
+
+  async function handleOlvideContrasena() {
+    if (!email) { alert("Escribe tu correo primero"); return; }
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) { alert(error.message); return; }
+    alert("Te enviamos un correo para restablecer tu contraseña.");
   }
 
   async function cargarVentas() {
@@ -657,7 +673,7 @@ El negocio del usuario tiene estos datos actuales:
 - Productos en inventario: ${inventario.length}
 - Productos con stock bajo: ${inventario.filter(p => p.stock <= (p.alerta_stock || 5)).length}
 Da consejos prácticos, concretos y motivadores. Responde siempre en español. Sé conciso (máximo 3 párrafos).`;
-      const response = await fetch("/api/chat", {
+      const response = await fetch("/.netlify/functions/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -694,7 +710,6 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
   const ventasHoy = ventas.filter(v => v.fecha === hoy).reduce((acc, v) => acc + v.precio, 0);
   const productosStockBajo = inventario.filter(p => p.stock <= (p.alerta_stock || 5));
 
-  // ─── Gráfica área degradada ───────────────────────────
   const finanzasPorDia = historialGeneral.reduce((acc: any, mov) => {
     const existe = acc.find((d: any) => d.fecha === mov.fecha);
     if (existe) {
@@ -706,20 +721,19 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
     return acc;
   }, []);
 
-  // ─── Reporte mensual ──────────────────────────────────
+  // ─── Reporte mensual con fix de formato de fecha ──────
   const mesActual = new Date().getMonth() + 1;
   const anioActual = new Date().getFullYear();
   const mesAnterior = mesActual === 1 ? 12 : mesActual - 1;
   const anioAnterior = mesActual === 1 ? anioActual - 1 : anioActual;
 
   function getDatosMes(mes: number, anio: number) {
-    const formato = new Intl.DateTimeFormat("es-MX");
     const v = ventas.filter(x => {
-      const d = new Date(x.fecha);
+      const d = parsearFecha(x.fecha);
       return d.getMonth() + 1 === mes && d.getFullYear() === anio;
     });
     const g = gastos.filter(x => {
-      const d = new Date(x.fecha);
+      const d = parsearFecha(x.fecha);
       return d.getMonth() + 1 === mes && d.getFullYear() === anio;
     });
     const totalV = v.reduce((a, x) => a + x.precio, 0);
@@ -752,7 +766,12 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
           <button onClick={handleLogin} className="w-full bg-green-500 p-3 rounded">
             {isRegister ? "Registrarse" : "Iniciar sesión"}
           </button>
-          <p onClick={() => setIsRegister(!isRegister)} className="text-center text-sm text-green-400 mt-4 cursor-pointer">
+          {!isRegister && (
+            <p onClick={handleOlvideContrasena} className="text-center text-xs text-slate-500 mt-3 cursor-pointer hover:text-slate-300">
+              ¿Olvidaste tu contraseña?
+            </p>
+          )}
+          <p onClick={() => setIsRegister(!isRegister)} className="text-center text-sm text-green-400 mt-3 cursor-pointer">
             {isRegister ? "Ya tengo cuenta" : "Crear cuenta"}
           </p>
         </div>
@@ -818,7 +837,6 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
               </div>
             )}
 
-            {/* Gráfica área degradada */}
             <div className="bg-slate-900 p-5 rounded-xl mt-4">
               <div className="flex items-center gap-4 mb-3">
                 <p className="text-slate-400 text-sm">Ventas vs Gastos</p>
@@ -850,7 +868,6 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
               </div>
             </div>
 
-            {/* Reporte del mes */}
             <div className="mt-6 pt-6 border-t border-slate-800">
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-lg">📊</span>
@@ -926,12 +943,15 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
           <div>
             <h2 className="text-2xl font-bold mb-6">Ventas</h2>
             <input placeholder="Producto" value={producto} onChange={(e) => setProducto(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800" />
-            <input placeholder="Precio" value={precio} onChange={(e) => setPrecio(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800" />
+            <input placeholder="Precio" value={precio} onChange={(e) => setPrecio(e.target.value)} type="number" inputMode="numeric" className="w-full mb-3 p-3 rounded bg-slate-800" />
             <button onClick={agregarVenta} className="bg-green-500 p-3 rounded w-full mb-6">Agregar venta</button>
             {ventas.map((v, i) => (
-              <div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
-                <span>{v.nombre} - ${v.precio}</span>
-                <button onClick={() => borrarVenta(i)} className="text-red-400">Eliminar</button>
+              <div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center">
+                <div>
+                  <p className="text-white text-sm">{v.nombre} — ${v.precio}</p>
+                  <p className="text-slate-500 text-xs">{v.fecha}</p>
+                </div>
+                <button onClick={() => borrarVenta(i)} className="text-red-400 text-sm">Eliminar</button>
               </div>
             ))}
           </div>
@@ -941,12 +961,15 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
           <div>
             <h2 className="text-2xl font-bold mb-6">Gastos</h2>
             <input placeholder="Nombre del gasto" value={gastoNombre} onChange={(e) => setGastoNombre(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800" />
-            <input placeholder="Monto" value={gastoPrecio} onChange={(e) => setGastoPrecio(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800" />
+            <input placeholder="Monto" value={gastoPrecio} onChange={(e) => setGastoPrecio(e.target.value)} type="number" inputMode="numeric" className="w-full mb-3 p-3 rounded bg-slate-800" />
             <button onClick={agregarGasto} className="bg-red-500 p-3 rounded w-full mb-6">Agregar gasto</button>
             {gastos.map((g, i) => (
-              <div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
-                <span>{g.nombre} - ${g.precio}</span>
-                <button onClick={() => borrarGasto(i)} className="text-red-400">Eliminar</button>
+              <div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center">
+                <div>
+                  <p className="text-white text-sm">{g.nombre} — ${g.precio}</p>
+                  <p className="text-slate-500 text-xs">{g.fecha}</p>
+                </div>
+                <button onClick={() => borrarGasto(i)} className="text-red-400 text-sm">Eliminar</button>
               </div>
             ))}
           </div>
@@ -968,7 +991,7 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
                 {historialActivo === i && (
                   <div>
                     <input placeholder="Movimiento" value={movNombre} onChange={(e) => setMovNombre(e.target.value)} className="w-full mb-2 p-2 rounded bg-slate-800" />
-                    <input placeholder="Monto" value={movPrecio} onChange={(e) => setMovPrecio(e.target.value)} className="w-full mb-2 p-2 rounded bg-slate-800" />
+                    <input placeholder="Monto" value={movPrecio} onChange={(e) => setMovPrecio(e.target.value)} type="number" inputMode="numeric" className="w-full mb-2 p-2 rounded bg-slate-800" />
                     <button onClick={agregarMovimientoHistorial} className="bg-green-500 p-2 rounded w-full mb-3">Agregar</button>
                     {h.movimientos.map((m, j) => (
                       <div key={j} className="flex justify-between text-sm mb-1">
@@ -983,9 +1006,12 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
             <hr className="my-6 border-slate-700" />
             <h2 className="text-2xl font-bold mb-6">Historial general</h2>
             {historialGeneral.map((m, i) => (
-              <div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between">
-                <span>{m.nombre} - ${m.precio}</span>
-                <span className={m.tipo === "venta" ? "text-green-400" : "text-red-400"}>{m.tipo}</span>
+              <div key={i} className="bg-slate-900 p-3 rounded mb-2 flex justify-between items-center">
+                <div>
+                  <p className="text-white text-sm">{m.nombre} — ${m.precio}</p>
+                  <p className="text-slate-500 text-xs">{m.fecha}</p>
+                </div>
+                <span className={m.tipo === "venta" ? "text-green-400 text-xs" : "text-red-400 text-xs"}>{m.tipo}</span>
               </div>
             ))}
           </div>
@@ -996,10 +1022,10 @@ Da consejos prácticos, concretos y motivadores. Responde siempre en español. S
             <h2 className="text-2xl font-bold mb-6 text-orange-400">Inventario</h2>
             <input placeholder="Nombre del producto" value={invNombre} onChange={(e) => setInvNombre(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800" />
             <div className="flex gap-2 mb-3">
-              <input placeholder="Stock" value={invStock} onChange={(e) => setInvStock(e.target.value)} className="flex-1 p-3 rounded bg-slate-800" />
-              <input placeholder="Precio" value={invPrecio} onChange={(e) => setInvPrecio(e.target.value)} className="flex-1 p-3 rounded bg-slate-800" />
+              <input placeholder="Stock" value={invStock} onChange={(e) => setInvStock(e.target.value)} type="number" inputMode="numeric" className="flex-1 p-3 rounded bg-slate-800" />
+              <input placeholder="Precio" value={invPrecio} onChange={(e) => setInvPrecio(e.target.value)} type="number" inputMode="numeric" className="flex-1 p-3 rounded bg-slate-800" />
             </div>
-            <input placeholder="Alerta cuando stock sea menor a (default: 5)" value={invAlerta} onChange={(e) => setInvAlerta(e.target.value)} className="w-full mb-3 p-3 rounded bg-slate-800" />
+            <input placeholder="Alerta cuando stock sea menor a (default: 5)" value={invAlerta} onChange={(e) => setInvAlerta(e.target.value)} type="number" inputMode="numeric" className="w-full mb-3 p-3 rounded bg-slate-800" />
             <button onClick={agregarProducto} className="bg-orange-500 p-3 rounded w-full mb-6">Agregar producto</button>
             {inventario.map((p) => (
               <div key={p.id} className={`p-3 rounded mb-2 ${p.stock <= (p.alerta_stock || 5) ? "bg-red-500/10 border border-red-500/20" : "bg-slate-900"}`}>
