@@ -12,8 +12,7 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY
 );
 
-const DIAS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-
+const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const MSGS_MANANA = [
   "¡Nuevo día, nueva oportunidad de vender! 🚀",
   "¡Buenos días! Hoy puede ser tu mejor día de ventas 💪",
