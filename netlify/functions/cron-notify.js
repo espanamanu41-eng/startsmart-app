@@ -5,7 +5,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
- 
+
 webpush.setVapidDetails(
   process.env.VAPID_SUBJECT,
   process.env.VAPID_PUBLIC_KEY,
@@ -13,21 +13,9 @@ webpush.setVapidDetails(
 );
 
 const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
-const MSGS_MANANA = [
-  "¡Nuevo día, nueva oportunidad de vender! 🚀",
-  "¡Buenos días! Hoy puede ser tu mejor día de ventas 💪",
-  "¡Arriba! Tu negocio te necesita hoy 🔥",
-];
-const MSGS_MEDIO = [
-  "¿Ya registraste tus ventas de esta mañana? 📊",
-  "Mitad del día — ¿cómo van las ventas? Anótalas 📝",
-  "¡No dejes para después! Registra tus movimientos 💰",
-];
-const MSGS_NOCHE = [
-  "¿Ya cerraste el día? No olvides anotar todo 🌙",
-  "Último recordatorio del día — ¿registraste todo? ✅",
-  "Buen trabajo hoy. Ahora anota tus ventas finales 📈",
-];
+const MSGS_MANANA = ["¡Nuevo día, nueva oportunidad de vender! 🚀"];
+const MSGS_MEDIO = ["¿Ya registraste tus ventas? 📊"];
+const MSGS_NOCHE = ["¿Ya cerraste el día? 🌙"];
 
 function randomMsg(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -51,25 +39,34 @@ exports.handler = async function(event) {
     const [hActual, mActual] = horaStr.split(":").map(Number);
     const minutosAhora = hActual * 60 + mActual;
 
+    const logs = [`Hora: ${horaStr}, Dia: ${diaStr}, diaIdx: ${diaIdx}, minutosAhora: ${minutosAhora}`];
+
     const { data: suscripciones } = await supabase.from("suscripciones").select("*");
     if (!suscripciones || suscripciones.length === 0) {
-      return { statusCode: 200, body: JSON.stringify({ ok: true, enviadas: 0 }) };
+      return { statusCode: 200, body: JSON.stringify({ ok: true, enviadas: 0, logs }) };
     }
 
+    logs.push(`Suscripciones encontradas: ${suscripciones.length}`);
     let enviadas = 0;
 
     for (const sub of suscripciones) {
       const horarios = sub.horarios;
-      if (!horarios || !horarios[diaIdx]?.activo) continue;
+      const horarioDelDia = horarios?.[diaIdx];
+      logs.push(`Horario del dia: ${JSON.stringify(horarioDelDia)}`);
 
-      const horario = horarios[diaIdx];
-      const [hAp, mAp] = horario.apertura.split(":").map(Number);
-      const [hCi, mCi] = horario.cierre.split(":").map(Number);
+      if (!horarioDelDia?.activo) {
+        logs.push("Dia no activo, saltando");
+        continue;
+      }
 
+      const [hAp, mAp] = horarioDelDia.apertura.split(":").map(Number);
+      const [hCi, mCi] = horarioDelDia.cierre.split(":").map(Number);
       const minutosApertura = hAp * 60 + mAp;
       const minutosCierre = hCi * 60 + mCi;
       const minutosMedio = Math.floor((minutosApertura + minutosCierre) / 2);
       const minutosCierreNotif = minutosCierre - 30;
+
+      logs.push(`minutosApertura: ${minutosApertura}, minutosAhora: ${minutosAhora}, diff: ${Math.abs(minutosAhora - minutosApertura)}`);
 
       let titulo = null;
       let cuerpo = null;
@@ -85,17 +82,18 @@ exports.handler = async function(event) {
         cuerpo = randomMsg(MSGS_NOCHE);
       }
 
+      logs.push(`titulo: ${titulo}`);
+
       if (titulo && cuerpo) {
         try {
-          const subscriptionObj = typeof sub.subscription === 'string' 
-  ? JSON.parse(sub.subscription) 
-  : sub.subscription;
-await webpush.sendNotification(
-  subscriptionObj,
-  JSON.stringify({ title: titulo, body: cuerpo })
-);
+          const subscriptionObj = typeof sub.subscription === 'string'
+            ? JSON.parse(sub.subscription)
+            : sub.subscription;
+          await webpush.sendNotification(subscriptionObj, JSON.stringify({ title: titulo, body: cuerpo }));
           enviadas++;
+          logs.push("Notificacion enviada!");
         } catch (e) {
+          logs.push(`Error enviando: ${e.message}`);
           if (e.statusCode === 410) {
             await supabase.from("suscripciones").delete().eq("id", sub.id);
           }
@@ -103,7 +101,7 @@ await webpush.sendNotification(
       }
     }
 
-    return { statusCode: 200, body: JSON.stringify({ ok: true, enviadas }) };
+    return { statusCode: 200, body: JSON.stringify({ ok: true, enviadas, logs }) };
   } catch (error) {
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   }
