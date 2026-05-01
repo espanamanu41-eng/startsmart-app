@@ -87,10 +87,13 @@ exports.handler = async function(event) {
 
       if (titulo && cuerpo) {
         try {
-          await webpush.sendNotification(
-            sub.subscription,
-            JSON.stringify({ title: titulo, body: cuerpo })
-          );
+          const subscriptionObj = typeof sub.subscription === 'string' 
+  ? JSON.parse(sub.subscription) 
+  : sub.subscription;
+await webpush.sendNotification(
+  subscriptionObj,
+  JSON.stringify({ title: titulo, body: cuerpo })
+);
           enviadas++;
         } catch (e) {
           if (e.statusCode === 410) {
