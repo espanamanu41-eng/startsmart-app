@@ -35,7 +35,7 @@ exports.handler = async function(event) {
       weekday: "short"
     });
 
-    const diaIdx = DIAS.findIndex(d => diaStr.toLowerCase().startsWith(d.toLowerCase().slice(0, 3)));
+    const diaIdx = DIAS.findIndex(d => diaStr.toLowerCase() === d.toLowerCase());
     const [hActual, mActual] = horaStr.split(":").map(Number);
     const minutosAhora = hActual * 60 + mActual;
 
