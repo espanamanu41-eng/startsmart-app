@@ -187,7 +187,7 @@ function NotificacionesPanel() {
           await fetch("/.netlify/functions/notify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ subscription: sub.toJSON(), user_id: user?.id, horarios }),
+            body: JSON.stringify({ subscription: sub.toJSON(), user_id: user?.id, horarios, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
           });
         }
         setGuardado(true);
