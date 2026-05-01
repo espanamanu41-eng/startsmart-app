@@ -74,13 +74,13 @@ exports.handler = async function(event) {
       let titulo = null;
       let cuerpo = null;
 
-      if (Math.abs(minutosAhora - minutosApertura) <= 1) {
+      if (Math.abs(minutosAhora - minutosApertura) <= 6) {
         titulo = "StartSmart 🌅";
         cuerpo = randomMsg(MSGS_MANANA);
-      } else if (Math.abs(minutosAhora - minutosMedio) <= 1) {
+      } else if (Math.abs(minutosAhora - minutosMedio) <= 6) {
         titulo = "StartSmart ☀️";
         cuerpo = randomMsg(MSGS_MEDIO);
-      } else if (Math.abs(minutosAhora - minutosCierreNotif) <= 1) {
+      } else if (Math.abs(minutosAhora - minutosCierreNotif) <= 6) {
         titulo = "StartSmart 🌙";
         cuerpo = randomMsg(MSGS_NOCHE);
       }
